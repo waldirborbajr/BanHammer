@@ -6,11 +6,13 @@ mod telegram;
 
 use teloxide::prelude::*;
 
+use crate::i18n::lang::DEFAULT_LANG;
+
 #[tokio::main]
 async fn main() {
     core::logger::init();
 
-    log::info!("🚀 Iniciando BanHammer...");
+    core::logger::startup(*DEFAULT_LANG);
 
     let bot = Bot::from_env();
 
