@@ -2,37 +2,111 @@
 
 [pornography]
 keywords = [
+    # Português
     "porn",
     "porno",
     "pornografia",
-    "xxx",
-    "nsfw",
-    "onlyfans",
+    "sexo",
+    "sexual",
     "nudes",
-    "sexo"
+    "nude",
+    "nsfw",
+    "xxx",
+    "putaria",
+    "puta",
+    "piranha",
+    "boquete",
+    "anal",
+    "gozar",
+    "tesão",
+    "tesao",
+    "foder",
+    "foda",
+    "pelada",
+    "pelado",
+    "safada",
+    "safado",
+    "conteúdo adulto",
+    "conteudo adulto",
+
+    # Inglês
+    "pornography",
+    "horny",
+    "fuck",
+    "fucking",
+    "slut",
+    "bitch",
+    "dick",
+    "pussy",
+    "cum",
+    "blowjob",
+    "adult content",
+    "explicit content",
+    "private video",
+
+    # Espanhol
+    "pornografía",
+    "desnudo",
+    "desnuda",
+    "contenido adulto",
+    "contenido explícito",
+    "contenido explicito",
+
+    # Já existentes no toml original
+    "onlyfans"
 ]
 
 
 [gambling]
 keywords = [
-    "bet",
-    "casino",
+    # Português
+    "aposta",
+    "aposte",
+    "apostar",
     "cassino",
+    "casino",
+    "bet",
+    "bet365",
     "slot",
-    "roulette",
-    "aposta"
-]
-
-
-[spam]
-keywords = [
-    "buy now",
-    "promo",
-    "discount",
-    "cheap",
+    "caça-níquel",
+    "caça níquel",
+    "roleta",
     "ganhe dinheiro",
-    "renda extra"
+    "ganhe fácil",
+    "prêmio garantido",
+    "dinheiro rápido",
+    "lucro fácil",
+    "odd",
+    "odds",
+    "palpite",
+    "bolão",
+    "jogo do bicho",
+    "banca esportiva",
+
+    # Inglês
+    "gambling",
+    "betting",
+    "roulette",
+    "jackpot",
+    "sportsbet",
+    "sportbet",
+    "place a bet",
+    "free bet",
+    "bonus bet",
+
+    # Espanhol
+    "apuesta",
+    "apuestas",
+    "tragamonedas",
+    "ruleta",
+    "premio",
+    "ganar dinero",
+    "dinero fácil",
+    "bono gratis",
+    "apuesta deportiva"
 ]
+
+
 
 
 [csam]
@@ -53,5 +127,58 @@ domains = [
     "xnxx.com",
     "bit.ly",
     "tinyurl.com",
-    "bet365"
+    "bet365",
+    "onlyfans.com",
+    "pornhub.com",
+    "xvideos.com",
+    "xnxx.com",
+    "bit.ly",
+    "tinyurl.com",
+    "t.me/joinchat",
+    "t.me/+",
+    "bet365",
+    "sportbet",
+    "cassino",
+    "adult",
+    "porn"
+]
+
+[spam]
+keywords = [
+    # Português
+    "dinheiro fácil",
+    "renda extra",
+    "ganhe em casa",
+    "ganhe dinheiro",
+    "trabalho online",
+    "lucro garantido",
+    "investimento seguro",
+    "retorno garantido",
+    "multiplique seu dinheiro",
+    "renda passiva",
+    "pirâmide",
+    "esquema",
+    "mlm",
+    "marketing multinível",
+    "afiliado fácil",
+
+    # Inglês
+    "make money",
+    "easy money",
+    "get rich",
+    "work from home",
+    "guaranteed profit",
+    "investment opportunity",
+    "passive income",
+    "double your money",
+    "risk free",
+    "pyramid scheme",
+    "affiliate program",
+    "earn fast",
+
+    # Já existentes no toml original
+    "buy now",
+    "promo",
+    "discount",
+    "cheap"
 ]

@@ -8,46 +8,12 @@ lazy_static! {
         r"(https?://[^\s]+)"
     )
     .unwrap();
-
-
-    /// Domínios considerados suspeitos.
-    ///
-    /// A lista pode futuramente ser carregada de banco
-    /// ou arquivo de configuração.
-    static ref SUSPICIOUS_DOMAINS: Vec<&'static str> = vec![
-        // Conteúdo adulto
-        "onlyfans.com",
-        "pornhub.com",
-        "xvideos.com",
-        "xnxx.com",
-
-        // Encurtadores frequentemente usados em spam
-        "bit.ly",
-        "tinyurl.com",
-
-        // Convites suspeitos Telegram
-        "t.me/joinchat",
-        "t.me/+",
-
-        // Apostas
-        "bet365",
-        "sportbet",
-        "cassino",
-
-        // Categorias suspeitas genéricas
-        "adult",
-        "porn",
-    ];
 }
 
 /// Verifica se uma mensagem contém links suspeitos.
 ///
-/// Analisa:
-/// - domínio da URL
-/// - padrões conhecidos de abuso
-///
-/// Retorna `true` quando encontra uma URL bloqueada.
-pub fn is_suspicious_link(text: &str) -> bool {
+/// `domains` vem de `state.moderation.links.domains` (config/moderation.toml).
+pub fn is_suspicious_link(text: &str, domains: &[String]) -> bool {
     if text.is_empty() {
         return false;
     }
@@ -60,9 +26,9 @@ pub fn is_suspicious_link(text: &str) -> bool {
 
         let host = url.host_str().unwrap_or("").to_lowercase();
 
-        if SUSPICIOUS_DOMAINS
+        if domains
             .iter()
-            .any(|domain| host.contains(domain))
+            .any(|domain| host.contains(&domain.to_lowercase()))
         {
             return true;
         }
