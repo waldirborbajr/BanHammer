@@ -23,16 +23,18 @@ use url::Url;
 enum Lang {
     Pt,
     En,
+    Es,
 }
-
 impl Lang {
-    fn from_code(code: &str) -> Option<Self> {
+fn from_code(code: &str) -> Option<Self> {
         match code.to_lowercase().as_str() {
             "pt" | "pt-br" | "ptbr" => Some(Lang::Pt),
             "en" | "en-us" | "enus" => Some(Lang::En),
+            "es" | "es-es" | "eses" => Some(Lang::Es),
             _ => None,
         }
     }
+}
 
     /// Read the process-wide default language from `BOT_DEFAULT_LANG`.
     /// Falls back to Portuguese if unset or invalid, preserving prior behavior.
@@ -97,6 +99,19 @@ mod messages {
                  /status — bot status\n\
                  /language <pt|en> — sets the bot's language for this group (admins only)"
             }
+            Lang::Es => {
+            "🤖 *BanHammer* v2.1\n\n\
+             Detecta automáticamente:\n\
+             • Pornografía\n\
+             • Ventas / spam\n\
+             • Apuestas\n\
+             • Explotación infantil / CSAM\n\
+             • Enlaces sospechosos\n\n\
+             Comandos:\n\
+             /help — esta ayuda\n\
+             /status — estado del bot\n\
+             /language <pt|en|es> — cambia el idioma del bot para este grupo (solo administradores)"
+        }
         }
     }
 
@@ -104,6 +119,8 @@ mod messages {
         match lang {
             Lang::Pt => "✅ BanHammer está online e protegendo o grupo!",
             Lang::En => "✅ BanHammer is online and protecting the group!",
+                    Lang::Es => "✅ ¡BanHammer está en línea y protegiendo el grupo!",
+
         }
     }
 
@@ -111,6 +128,8 @@ mod messages {
         match lang {
             Lang::Pt => "🚫 Conteúdo proibido detectado e removido.",
             Lang::En => "🚫 Prohibited content detected and removed.",
+                    Lang::Es => "🚫 Contenido prohibido detectado y eliminado.",
+
         }
     }
 
@@ -118,6 +137,8 @@ mod messages {
         match lang {
             Lang::Pt => format!("🚫 @{username} foi banido por violação das regras."),
             Lang::En => format!("🚫 @{username} has been banned for violating the rules."),
+                    Lang::Es => format!("🚫 @{username} ha sido expulsado por infringir las normas."),
+
         }
     }
 
@@ -125,6 +146,8 @@ mod messages {
         match lang {
             Lang::Pt => "✅ Idioma do bot definido para Português.",
             Lang::En => "✅ Bot language set to English.",
+                    Lang::Es => "✅ Idioma del bot establecido en Español.",
+
         }
     }
 
@@ -132,6 +155,7 @@ mod messages {
         match lang {
             Lang::Pt => "⚠️ Idioma inválido. Use `/language pt` ou `/language en`.",
             Lang::En => "⚠️ Invalid language. Use `/language pt` or `/language en`.",
+                    Lang::Es => "⚠️ Idioma no válido. Usa `/language pt`, `/language en` o `/language es`.",
         }
     }
 
@@ -139,6 +163,9 @@ mod messages {
         match lang {
             Lang::Pt => "⚠️ Apenas administradores podem alterar o idioma do bot.",
             Lang::En => "⚠️ Only administrators can change the bot's language.",
+                    Lang::Es => "⚠️ Solo los administradores pueden cambiar el idioma del bot.",
+
+
         }
     }
 }
@@ -152,7 +179,7 @@ enum Command {
     Help,
     #[command(description = "Status do bot / Bot status")]
     Status,
-    #[command(description = "Definir idioma / Set language: pt|en")]
+    #[command(description = "Definir idioma / Set language / Establecer idioma: pt|en|es")]
     Language(String),
 }
 
