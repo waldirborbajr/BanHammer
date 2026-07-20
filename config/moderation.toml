@@ -1,0 +1,57 @@
+# Palavras proibidas por categoria
+
+[pornography]
+keywords = [
+    "porn",
+    "porno",
+    "pornografia",
+    "xxx",
+    "nsfw",
+    "onlyfans",
+    "nudes",
+    "sexo"
+]
+
+
+[gambling]
+keywords = [
+    "bet",
+    "casino",
+    "cassino",
+    "slot",
+    "roulette",
+    "aposta"
+]
+
+
+[spam]
+keywords = [
+    "buy now",
+    "promo",
+    "discount",
+    "cheap",
+    "ganhe dinheiro",
+    "renda extra"
+]
+
+
+[csam]
+keywords = [
+    "loli",
+    "shota",
+    "pedofilia",
+    "child porn",
+    "underage"
+]
+
+
+[links]
+domains = [
+    "onlyfans.com",
+    "pornhub.com",
+    "xvideos.com",
+    "xnxx.com",
+    "bit.ly",
+    "tinyurl.com",
+    "bet365"
+]
