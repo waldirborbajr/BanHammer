@@ -4,9 +4,15 @@ use std::sync::Mutex;
 
 use teloxide::{
     prelude::*,
-    types::{ChatId, ChatMemberKind, ParseMode},
+    types::{
+        ChatId,
+        ChatMemberKind,
+        ParseMode,
+        User,
+    },
     utils::command::BotCommands,
 };
+
 use regex::Regex;
 use lazy_static::lazy_static;
 use url::Url;
