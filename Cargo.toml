@@ -16,6 +16,8 @@ sqlx = { version = "0.8", features = [
     "sqlite",
     "macros"
 ] }
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
 
 [alias]
 b = "build"
