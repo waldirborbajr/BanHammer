@@ -12,6 +12,10 @@ pub enum Command {
     #[command(description = "Status do bot / Bot status / Estado del bot")]
     Status,
 
+    /// Mostra estatísticas de moderação do grupo
+    #[command(description = "Estatísticas / Stats / Estadísticas")]
+    Stats,
+
     /// Altera o idioma do grupo
     #[command(description = "Idioma: pt|en|es / Language: pt|en|es")]
     Language(String),

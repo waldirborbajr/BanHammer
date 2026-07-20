@@ -62,3 +62,45 @@ pub fn lang_no_permission(lang: Lang) -> &'static str {
         Lang::Es => es::LANG_NO_PERMISSION,
     }
 }
+
+/// Rótulos usados para montar a mensagem de /stats
+pub struct StatsLabels {
+    pub title: &'static str,
+    pub total: &'static str,
+    pub last_24h: &'static str,
+    pub by_type: &'static str,
+    pub top: &'static str,
+    pub empty: &'static str,
+}
+
+/// Rótulos de estatísticas no idioma do chat
+pub fn stats_labels(lang: Lang) -> StatsLabels {
+    match lang {
+        Lang::Pt => StatsLabels {
+            title: pt::STATS_TITLE,
+            total: pt::STATS_TOTAL,
+            last_24h: pt::STATS_24H,
+            by_type: pt::STATS_BY_TYPE,
+            top: pt::STATS_TOP,
+            empty: pt::STATS_EMPTY,
+        },
+
+        Lang::En => StatsLabels {
+            title: en::STATS_TITLE,
+            total: en::STATS_TOTAL,
+            last_24h: en::STATS_24H,
+            by_type: en::STATS_BY_TYPE,
+            top: en::STATS_TOP,
+            empty: en::STATS_EMPTY,
+        },
+
+        Lang::Es => StatsLabels {
+            title: es::STATS_TITLE,
+            total: es::STATS_TOTAL,
+            last_24h: es::STATS_24H,
+            by_type: es::STATS_BY_TYPE,
+            top: es::STATS_TOP,
+            empty: es::STATS_EMPTY,
+        },
+    }
+}

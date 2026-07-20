@@ -36,7 +36,6 @@ pub enum ViolationType {
 
 impl ViolationType {
 
-
     pub fn severity(
         &self,
     ) -> u8 {
@@ -46,21 +45,39 @@ impl ViolationType {
             ViolationType::Csam =>
                 5,
 
-
             ViolationType::Pornography =>
                 4,
-
 
             ViolationType::Gambling =>
                 3,
 
-
             ViolationType::SuspiciousLink =>
                 2,
 
-
             ViolationType::Spam =>
                 1,
+        }
+    }
+
+    /// Nome estável usado para persistência (coluna violation_type).
+    pub fn as_str(&self) -> &'static str {
+
+        match self {
+
+            ViolationType::Csam =>
+                "csam",
+
+            ViolationType::Pornography =>
+                "pornography",
+
+            ViolationType::Gambling =>
+                "gambling",
+
+            ViolationType::SuspiciousLink =>
+                "suspicious_link",
+
+            ViolationType::Spam =>
+                "spam",
         }
     }
 }

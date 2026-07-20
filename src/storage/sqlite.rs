@@ -180,3 +180,91 @@ pub async fn get_blocked_domains(pool: &SqlitePool) -> Result<Vec<String>, sqlx:
         .map(|row| row.get::<String, _>("domain"))
         .collect())
 }
+
+/// Estatísticas agregadas de violações de um chat.
+#[derive(Debug, Default)]
+pub struct ChatStats {
+    /// Total de violações já registradas no chat.
+    pub total: i64,
+
+    /// Violações nas últimas 24 horas.
+    pub last_24h: i64,
+
+    /// Contagem por categoria (violation_type, count), ordenado desc.
+    pub by_type: Vec<(String, i64)>,
+
+    /// Top 5 usuários com mais violações (user_id, count).
+    pub top_offenders: Vec<(i64, i64)>,
+}
+
+/// Monta as estatísticas de um chat a partir da tabela `violations`.
+pub async fn get_chat_stats(pool: &SqlitePool, chat_id: i64) -> Result<ChatStats, sqlx::Error> {
+    let total: i64 = sqlx::query(
+        r#"
+        SELECT COUNT(*) as c
+        FROM violations
+        WHERE chat_id = ?
+        "#,
+    )
+    .bind(chat_id)
+    .fetch_one(pool)
+    .await?
+    .get("c");
+
+    let last_24h: i64 = sqlx::query(
+        r#"
+        SELECT COUNT(*) as c
+        FROM violations
+        WHERE chat_id = ?
+          AND created_at >= datetime('now', '-1 day')
+        "#,
+    )
+    .bind(chat_id)
+    .fetch_one(pool)
+    .await?
+    .get("c");
+
+    let by_type_rows = sqlx::query(
+        r#"
+        SELECT violation_type, COUNT(*) as c
+        FROM violations
+        WHERE chat_id = ?
+        GROUP BY violation_type
+        ORDER BY c DESC
+        "#,
+    )
+    .bind(chat_id)
+    .fetch_all(pool)
+    .await?;
+
+    let by_type = by_type_rows
+        .into_iter()
+        .map(|row| (row.get::<String, _>("violation_type"), row.get::<i64, _>("c")))
+        .collect();
+
+    let top_rows = sqlx::query(
+        r#"
+        SELECT user_id, COUNT(*) as c
+        FROM violations
+        WHERE chat_id = ?
+        GROUP BY user_id
+        ORDER BY c DESC
+        LIMIT 5
+        "#,
+    )
+    .bind(chat_id)
+    .fetch_all(pool)
+    .await?;
+
+    let top_offenders = top_rows
+        .into_iter()
+        .map(|row| (row.get::<i64, _>("user_id"), row.get::<i64, _>("c")))
+        .collect();
+
+    Ok(ChatStats {
+        total,
+        last_24h,
+        by_type,
+        top_offenders,
+    })
+}
