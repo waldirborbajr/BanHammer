@@ -1,0 +1,39 @@
+[package]
+name = "banhammer" 
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+teloxide = { version = "0.13", features = ["macros", "ctrlc_handler"] }
+tokio = { version = "1", features = ["full"] }
+pretty_env_logger = "0.5"
+log = "0.4"
+regex = "1"
+lazy_static = "1.5"
+
+[profile.release]
+# === Otimizações de VELOCIDADE ===
+opt-level = 3                    # Máxima otimização de performance
+lto = true                       # Link Time Optimization (melhora performance e reduz tamanho)
+codegen-units = 1                # Melhor otimização (mais lento para compilar)
+panic = "abort"                  # Remove overhead de unwinding (mais rápido e menor)
+
+# === Otimizações de TAMANHO ===
+strip = "symbols"                # Remove símbolos de debug (reduz muito o binário)
+debug = false
+overflow-checks = false
+
+# === SEGURANÇA ===
+#relro = "full"                   # Proteção contra ataques de memória
+#pie = true                       # Position Independent Executable
+#stack-protector = true           # Proteção contra stack overflows
+
+# Otimizações extras para binário pequeno
+# opt-level = "z"                  # Prioriza TAMANHO (substitui o 3 se quiser binário menor)
+# Use "z" se quiser o binário o menor possível
+# Use "3" se quiser mais velocidade
+
+# Flags avançadas (Rust 1.80+)
+#[profile.release.build-override]
+#opt-level = 3
+
