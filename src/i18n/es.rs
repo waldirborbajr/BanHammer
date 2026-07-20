@@ -1,6 +1,8 @@
-//! Mensagens em Espanhol (Espanha)
+//! Mensagens em Espanhol (España)
 
-pub const HELP: &str = r#"🤖 *BanHammer*
+pub fn help() -> String {
+    format!(
+        r#"🤖 *BanHammer v{}*
 
 Protege automáticamente los grupos contra:
 
@@ -18,20 +20,34 @@ Comandos disponibles:
 
 /status - Muestra el estado del bot.
 
-/language <pt|en|es> - Cambia el idioma del grupo (solo administradores)."#;
+/language <pt|en|es> - Cambia el idioma del grupo (solo administradores)."#,
+        env!("CARGO_PKG_VERSION")
+    )
+}
 
-pub const STATUS: &str = "🟢 BanHammer está en línea y protegiendo este grupo.";
+
+pub const STATUS: &str =
+    "🟢 BanHammer está en línea y protegiendo este grupo.";
+
 
 pub const VIOLATION_GENERIC: &str =
     "🚫 Se ha detectado contenido prohibido y se han aplicado las medidas correspondientes.";
 
-pub const LANG_SET: &str = "✅ El idioma del grupo se ha cambiado correctamente a Español.";
 
-pub const LANG_INVALID: &str = "⚠️ Idioma no válido. Utiliza: pt, en o es.";
+pub fn BANNED(username: &str) -> String {
+    format!(
+        "🚫 @{username} ha sido expulsado por infringir las normas."
+    )
+}
+
+
+pub const LANG_SET: &str =
+    "✅ El idioma del grupo se ha cambiado correctamente a Español.";
+
+
+pub const LANG_INVALID: &str =
+    "⚠️ Idioma no válido. Utiliza: pt, en o es.";
+
 
 pub const LANG_NO_PERMISSION: &str =
     "⛔ Solo los administradores pueden cambiar el idioma del grupo.";
-
-pub fn BANNED(username: &str) -> String {
-    format!("🚫 @{username} ha sido expulsado por infringir las normas.")
-}
