@@ -34,7 +34,7 @@ fn from_code(code: &str) -> Option<Self> {
             _ => None,
         }
     }
-}
+
 
     /// Read the process-wide default language from `BOT_DEFAULT_LANG`.
     /// Falls back to Portuguese if unset or invalid, preserving prior behavior.
@@ -223,6 +223,8 @@ async fn main() {
         match *DEFAULT_LANG {
             Lang::Pt => "pt",
             Lang::En => "en",
+                Lang::Es => "es",
+
         }
     );
 
@@ -246,7 +248,7 @@ async fn command_handler(bot: Bot, msg: Message, cmd: Command) -> ResponseResult
     match cmd {
         Command::Help => {
             bot.send_message(chat_id, messages::help(lang))
-                .parse_mode(ParseMode::Markdown)
+                .parse_mode(ParseMode::MarkdownV2)
                 .await?;
         }
         Command::Status => {

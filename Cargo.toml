@@ -12,6 +12,12 @@ regex = "1"
 lazy_static = "1.5"
 url = "2"
 
+[alias]
+b = "build"
+r = "run"
+c = "clippy --all-targets --all-features"
+call = "clippy --all-targets --all-features -- -D warnings"
+
 [profile.release]
 # === Otimizações de VELOCIDADE ===
 opt-level = 3                    # Máxima otimização de performance
