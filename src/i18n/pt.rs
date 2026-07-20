@@ -17,29 +17,17 @@ Comandos:
     )
 }
 
+pub const STATUS: &str = "✅ BotHammer está online e protegendo o grupo!";
 
-pub const STATUS: &str =
-    "✅ BotHammer está online e protegendo o grupo!";
-
-
-pub const VIOLATION_GENERIC: &str =
-    "🚫 Conteúdo proibido detectado e removido.";
-
+pub const VIOLATION_GENERIC: &str = "🚫 Conteúdo proibido detectado e removido.";
 
 pub fn BANNED(username: &str) -> String {
-    format!(
-        "🚫 @{username} foi banido por violação das regras."
-    )
+    format!("🚫 @{username} foi banido por violação das regras.")
 }
 
-
-pub const LANG_SET: &str =
-    "✅ Idioma do bot definido para Português.";
-
+pub const LANG_SET: &str = "✅ Idioma do bot definido para Português.";
 
 pub const LANG_INVALID: &str =
     "⚠️ Idioma inválido. Use `/language pt`, `/language en` ou `/language es`.";
 
-
-pub const LANG_NO_PERMISSION: &str =
-    "⚠️ Apenas administradores podem alterar o idioma do bot.";
+pub const LANG_NO_PERMISSION: &str = "⚠️ Apenas administradores podem alterar o idioma do bot.";

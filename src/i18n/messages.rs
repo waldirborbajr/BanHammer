@@ -1,10 +1,4 @@
-use super::{
-    en,
-    es,
-    lang::Lang,
-    pt,
-};
-
+use super::{en, es, lang::Lang, pt};
 
 /// Mensagem de ajuda
 pub fn help(lang: Lang) -> String {
@@ -15,7 +9,6 @@ pub fn help(lang: Lang) -> String {
     }
 }
 
-
 /// Status do bot
 pub fn status(lang: Lang) -> &'static str {
     match lang {
@@ -25,20 +18,14 @@ pub fn status(lang: Lang) -> &'static str {
     }
 }
 
-
 /// Usuário banido
-pub fn banned(
-    lang: Lang,
-    username: &str,
-) -> String {
-
+pub fn banned(lang: Lang, username: &str) -> String {
     match lang {
         Lang::Pt => pt::BANNED(username),
         Lang::En => en::BANNED(username),
         Lang::Es => es::BANNED(username),
     }
 }
-
 
 /// Violação genérica
 pub fn violation_generic(lang: Lang) -> &'static str {
@@ -49,7 +36,6 @@ pub fn violation_generic(lang: Lang) -> &'static str {
     }
 }
 
-
 /// Idioma alterado
 pub fn lang_set(lang: Lang) -> &'static str {
     match lang {
@@ -59,7 +45,6 @@ pub fn lang_set(lang: Lang) -> &'static str {
     }
 }
 
-
 /// Idioma inválido
 pub fn lang_invalid(lang: Lang) -> &'static str {
     match lang {
@@ -68,7 +53,6 @@ pub fn lang_invalid(lang: Lang) -> &'static str {
         Lang::Es => es::LANG_INVALID,
     }
 }
-
 
 /// Sem permissão para alterar idioma
 pub fn lang_no_permission(lang: Lang) -> &'static str {

@@ -22,7 +22,6 @@ Comandos disponibles:
 
 pub const STATUS: &str = "🟢 BanHammer está en línea y protegiendo este grupo.";
 
-
 pub const VIOLATION_GENERIC: &str =
     "🚫 Se ha detectado contenido prohibido y se han aplicado las medidas correspondientes.";
 
