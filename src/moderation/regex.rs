@@ -32,7 +32,6 @@ lazy_static! {
     .expect("Invalid special chars regex");
 }
 
-
 /// Normaliza texto antes da análise.
 ///
 /// Operações:
@@ -42,8 +41,7 @@ lazy_static! {
 pub fn normalize_text(text: &str) -> String {
     let lower = text.to_lowercase();
 
-    let cleaned = SPECIAL_CHARS_REGEX
-        .replace_all(&lower, "");
+    let cleaned = SPECIAL_CHARS_REGEX.replace_all(&lower, "");
 
     MULTIPLE_SPACES_REGEX
         .replace_all(&cleaned, " ")

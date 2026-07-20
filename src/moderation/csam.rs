@@ -50,7 +50,6 @@ lazy_static! {
     ];
 }
 
-
 /// Detecta termos relacionados a exploração sexual infantil.
 ///
 /// Este módulo possui prioridade máxima no mecanismo
@@ -62,7 +61,5 @@ pub fn is_csam(text: &str) -> bool {
         return false;
     }
 
-    CSAM_PATTERNS
-        .iter()
-        .any(|pattern| pattern.is_match(text))
+    CSAM_PATTERNS.iter().any(|pattern| pattern.is_match(text))
 }

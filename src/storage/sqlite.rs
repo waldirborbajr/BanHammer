@@ -1,38 +1,28 @@
 use sqlx::{
-    sqlite::{SqlitePool, SqlitePoolOptions},
     Row,
+    sqlite::{SqlitePool, SqlitePoolOptions},
 };
 
 use std::time::Duration;
-
 
 /// Inicializa conexão com SQLite.
 ///
 /// Exemplo:
 /// sqlite://bothammer.db
-pub async fn init_database(
-    database_url: &str,
-) -> Result<SqlitePool, sqlx::Error> {
-
+pub async fn init_database(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(5))
         .connect(database_url)
         .await?;
 
-
     create_tables(&pool).await?;
 
     Ok(pool)
 }
 
-
 /// Criação das tabelas necessárias.
-async fn create_tables(
-    pool: &SqlitePool,
-) -> Result<(), sqlx::Error> {
-
-
+async fn create_tables(pool: &SqlitePool) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         CREATE TABLE IF NOT EXISTS chats (
@@ -40,12 +30,10 @@ async fn create_tables(
             language TEXT NOT NULL DEFAULT 'pt',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
-        "#
+        "#,
     )
     .execute(pool)
     .await?;
-
-
 
     sqlx::query(
         r#"
@@ -54,12 +42,10 @@ async fn create_tables(
             username TEXT,
             first_seen DATETIME DEFAULT CURRENT_TIMESTAMP
         );
-        "#
+        "#,
     )
     .execute(pool)
     .await?;
-
-
 
     sqlx::query(
         r#"
@@ -71,12 +57,10 @@ async fn create_tables(
             message TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
-        "#
+        "#,
     )
     .execute(pool)
     .await?;
-
-
 
     sqlx::query(
         r#"
@@ -85,15 +69,13 @@ async fn create_tables(
             domain TEXT UNIQUE NOT NULL,
             enabled INTEGER DEFAULT 1
         );
-        "#
+        "#,
     )
     .execute(pool)
     .await?;
 
-
     Ok(())
 }
-
 
 /// Salva ou atualiza idioma do grupo.
 pub async fn set_chat_language(
@@ -101,8 +83,6 @@ pub async fn set_chat_language(
     chat_id: i64,
     language: &str,
 ) -> Result<(), sqlx::Error> {
-
-
     sqlx::query(
         r#"
         INSERT INTO chats(chat_id, language)
@@ -110,45 +90,34 @@ pub async fn set_chat_language(
 
         ON CONFLICT(chat_id)
         DO UPDATE SET language = excluded.language;
-        "#
+        "#,
     )
     .bind(chat_id)
     .bind(language)
     .execute(pool)
     .await?;
 
-
     Ok(())
 }
-
 
 /// Recupera idioma configurado do grupo.
 pub async fn get_chat_language(
     pool: &SqlitePool,
     chat_id: i64,
 ) -> Result<Option<String>, sqlx::Error> {
-
-
-    let result =
-        sqlx::query(
-            r#"
+    let result = sqlx::query(
+        r#"
             SELECT language
             FROM chats
             WHERE chat_id = ?
-            "#
-        )
-        .bind(chat_id)
-        .fetch_optional(pool)
-        .await?;
-
-
-    Ok(
-        result.map(|row| {
-            row.get::<String, _>("language")
-        })
+            "#,
     )
-}
+    .bind(chat_id)
+    .fetch_optional(pool)
+    .await?;
 
+    Ok(result.map(|row| row.get::<String, _>("language")))
+}
 
 /// Registra uma violação.
 pub async fn insert_violation(
@@ -158,8 +127,6 @@ pub async fn insert_violation(
     violation_type: &str,
     message: Option<&str>,
 ) -> Result<(), sqlx::Error> {
-
-
     sqlx::query(
         r#"
         INSERT INTO violations(
@@ -169,7 +136,7 @@ pub async fn insert_violation(
             message
         )
         VALUES (?, ?, ?, ?)
-        "#
+        "#,
     )
     .bind(chat_id)
     .bind(user_id)
@@ -178,57 +145,38 @@ pub async fn insert_violation(
     .execute(pool)
     .await?;
 
-
     Ok(())
 }
 
-
 /// Adiciona domínio bloqueado.
-pub async fn add_blocked_domain(
-    pool: &SqlitePool,
-    domain: &str,
-) -> Result<(), sqlx::Error> {
-
-
+pub async fn add_blocked_domain(pool: &SqlitePool, domain: &str) -> Result<(), sqlx::Error> {
     sqlx::query(
         r#"
         INSERT OR IGNORE INTO blocked_domains(domain)
         VALUES(?)
-        "#
+        "#,
     )
     .bind(domain)
     .execute(pool)
     .await?;
 
-
     Ok(())
 }
 
-
 /// Lista domínios bloqueados.
-pub async fn get_blocked_domains(
-    pool: &SqlitePool,
-) -> Result<Vec<String>, sqlx::Error> {
-
-
-    let rows =
-        sqlx::query(
-            r#"
+pub async fn get_blocked_domains(pool: &SqlitePool) -> Result<Vec<String>, sqlx::Error> {
+    let rows = sqlx::query(
+        r#"
             SELECT domain
             FROM blocked_domains
             WHERE enabled = 1
-            "#
-        )
-        .fetch_all(pool)
-        .await?;
-
-
-    Ok(
-        rows
-            .into_iter()
-            .map(|row| {
-                row.get::<String, _>("domain")
-            })
-            .collect()
+            "#,
     )
+    .fetch_all(pool)
+    .await?;
+
+    Ok(rows
+        .into_iter()
+        .map(|row| row.get::<String, _>("domain"))
+        .collect())
 }

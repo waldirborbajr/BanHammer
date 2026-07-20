@@ -10,7 +10,8 @@ pretty_env_logger = "0.5"
 log = "0.4"
 regex = "1"
 lazy_static = "1.5"
-url = "2"sqlx = { version = "0.8", features = [
+url = "2"
+sqlx = { version = "0.8", features = [
     "runtime-tokio",
     "sqlite",
     "macros"

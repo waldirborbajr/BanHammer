@@ -40,7 +40,6 @@ lazy_static! {
     ];
 }
 
-
 /// Verifica se uma mensagem contém links suspeitos.
 ///
 /// Analisa:
@@ -59,11 +58,7 @@ pub fn is_suspicious_link(text: &str) -> bool {
             Err(_) => continue,
         };
 
-        let host = url
-            .host_str()
-            .unwrap_or("")
-            .to_lowercase();
-
+        let host = url.host_str().unwrap_or("").to_lowercase();
 
         if SUSPICIOUS_DOMAINS
             .iter()

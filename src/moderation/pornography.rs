@@ -50,7 +50,6 @@ lazy_static! {
     ];
 }
 
-
 /// Detecta conteúdo pornográfico ou sexual explícito.
 ///
 /// Retorna `true` quando encontra padrões associados a:

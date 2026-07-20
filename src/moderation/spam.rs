@@ -1,5 +1,5 @@
-use regex::Regex;
 use lazy_static::lazy_static;
+use regex::Regex;
 
 lazy_static! {
     static ref SPAM_PATTERNS: Vec<Regex> = vec![
@@ -37,7 +37,6 @@ lazy_static! {
     ];
 }
 
-
 /// Detecta padrões comuns de spam e golpes financeiros.
 ///
 /// Retorna `true` quando a mensagem contém termos
@@ -47,7 +46,5 @@ pub fn is_spam(text: &str) -> bool {
         return false;
     }
 
-    SPAM_PATTERNS
-        .iter()
-        .any(|pattern| pattern.is_match(text))
+    SPAM_PATTERNS.iter().any(|pattern| pattern.is_match(text))
 }

@@ -45,7 +45,6 @@ lazy_static! {
     ];
 }
 
-
 /// Detecta conteúdo relacionado a apostas e jogos de azar.
 ///
 /// Retorna `true` quando encontra termos associados a:
