@@ -105,7 +105,7 @@ The project includes a configuration in [`.devcontainer/`](./.devcontainer/devco
 
 ## 🗺️ Roadmap
 
-- [ ] Externally configurable keyword/domain list (YAML/TOML file), without needing to recompile
+- [x] Externally configurable keyword/domain list (YAML/TOML file), without needing to recompile
 - [ ] Whitelist for users/admins exempt from the filter
 - [ ] Warning system before banning, configurable per group
 - [ ] Moderation action log in a separate channel
