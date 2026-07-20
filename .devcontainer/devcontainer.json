@@ -19,5 +19,5 @@
       "configureZshAsDefaultShell": true
     }
   },
-  "postCreateCommand": "cargo --version && rustc --version && cargo install just && just --version"
+  "postCreateCommand": "sudo apt update && cargo --version && rustc --version && cargo install just && just --version"
 }
