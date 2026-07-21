@@ -1,29 +1,27 @@
-use std::{collections::HashMap, env, sync::RwLock};
+use std::env;
 
-use lazy_static::lazy_static;
-use teloxide::types::ChatId;
-
-/// Idiomas suportados pelo BanHammer
+/// Idiomas suportados pelo BanHammer.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub enum Lang {
     Pt,
-
     En,
-
     Es,
 }
 
 impl Lang {
-    /// Converte código de idioma para Lang
+    /// Converte um código ISO (ou variante) para `Lang`.
     ///
-    /// Exemplos:
-    /// pt
-    /// pt-BR
-    /// en
-    /// es-ES
+    /// Exemplos aceitos:
     ///
+    /// - pt
+    /// - pt-BR
+    /// - pt_BR
+    /// - en
+    /// - en-US
+    /// - es
+    /// - es-ES
     pub fn from_code(code: &str) -> Option<Self> {
-        match code.trim().to_lowercase().as_str() {
+        match code.trim().to_ascii_lowercase().as_str() {
             "pt" | "pt-br" | "pt_br" => Some(Self::Pt),
 
             "en" | "en-us" | "en_us" => Some(Self::En),
@@ -34,69 +32,46 @@ impl Lang {
         }
     }
 
-    /// Retorna código ISO curto
-    pub fn code(&self) -> &'static str {
+    /// Retorna o código ISO curto do idioma.
+    pub const fn code(self) -> &'static str {
         match self {
             Self::Pt => "pt",
-
             Self::En => "en",
-
             Self::Es => "es",
         }
     }
 
-    /// Idioma padrão vindo do ambiente
-    pub fn default_from_env() -> Self {
-        let lang = env::var("BOT_DEFAULT_LANG").unwrap_or_else(|_| "pt".to_string());
+    /// Nome legível do idioma.
+    pub const fn display_name(self) -> &'static str {
+        match self {
+            Self::Pt => "Português",
+            Self::En => "English",
+            Self::Es => "Español",
+        }
+    }
 
-        Self::from_code(&lang).unwrap_or(Self::Pt)
+    /// Idioma padrão definido pela variável
+    /// de ambiente `BOT_DEFAULT_LANG`.
+    ///
+    /// Caso não exista ou seja inválida,
+    /// retorna Português.
+    pub fn default_from_env() -> Self {
+        env::var("BOT_DEFAULT_LANG")
+            .ok()
+            .as_deref()
+            .and_then(Self::from_code)
+            .unwrap_or(Self::Pt)
     }
 }
 
-lazy_static! {
-
-
-    /// Idioma padrão global
-    pub static ref DEFAULT_LANG: Lang =
-        Lang::default_from_env();
-
-
-
-    /// Idiomas específicos por grupo
-    static ref CHAT_LANGS:
-        RwLock<HashMap<ChatId, Lang>>
-    =
-        RwLock::new(
-            HashMap::new()
-        );
-
+impl Default for Lang {
+    fn default() -> Self {
+        Self::default_from_env()
+    }
 }
 
-/// Retorna o idioma configurado para o grupo
-///
-/// Caso não exista configuração,
-/// usa o idioma padrão.
-pub fn lang_for_chat(chat_id: ChatId) -> Lang {
-    CHAT_LANGS
-        .read()
-        .unwrap()
-        .get(&chat_id)
-        .copied()
-        .unwrap_or(*DEFAULT_LANG)
-}
-
-/// Define idioma do grupo
-pub fn set_lang_for_chat(chat_id: ChatId, lang: Lang) {
-    CHAT_LANGS.write().unwrap().insert(chat_id, lang);
-
-    log::info!("Idioma do chat {} alterado para {}", chat_id, lang.code());
-}
-
-/// Remove configuração personalizada
-///
-/// Volta a usar BOT_DEFAULT_LANG
-pub fn reset_lang_for_chat(chat_id: ChatId) {
-    CHAT_LANGS.write().unwrap().remove(&chat_id);
-
-    log::info!("Idioma do chat {} voltou ao padrão", chat_id);
+impl std::fmt::Display for Lang {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.code())
+    }
 }

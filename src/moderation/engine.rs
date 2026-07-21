@@ -1,77 +1,30 @@
 use crate::{core::state::AppState, telegram::events::TelegramEvent};
 
-use super::{csam, gambling, links, pornography, regex::normalize_text, spam};
-
-/// Resultado da análise de moderação.
-///
-/// A severidade define prioridade
-/// para futuras ações diferentes.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ViolationType {
-    Csam,
-
-    Pornography,
-
-    Gambling,
-
-    Spam,
-
-    SuspiciousLink,
-}
-
-impl ViolationType {
-    pub fn severity(&self) -> u8 {
-        match self {
-            ViolationType::Csam => 5,
-
-            ViolationType::Pornography => 4,
-
-            ViolationType::Gambling => 3,
-
-            ViolationType::SuspiciousLink => 2,
-
-            ViolationType::Spam => 1,
-        }
-    }
-
-    /// Nome estável usado para persistência (coluna violation_type).
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            ViolationType::Csam => "csam",
-
-            ViolationType::Pornography => "pornography",
-
-            ViolationType::Gambling => "gambling",
-
-            ViolationType::SuspiciousLink => "suspicious_link",
-
-            ViolationType::Spam => "spam",
-        }
-    }
-}
+use super::{
+    csam, gambling, links, pornography, regex::normalize_text, spam, violation::ViolationType,
+};
 
 /// Analisa uma mensagem usando:
 ///
-/// - Detectores internos (fixos e configuráveis)
-/// - Tipo de evento Telegram
+/// - Detectores fixos
+/// - Regras configuráveis
+/// - Contexto do evento Telegram
 ///
-/// As regras configuráveis são lidas através de `RwLock`s
-/// (ver `AppState::reload_moderation` e `AppState::add_blocked_domain`),
-/// então esta função é assíncrona.
+/// Retorna o tipo da violação encontrada.
 pub async fn analyze_message(
     text: &str,
     event: &TelegramEvent,
     state: &AppState,
 ) -> Option<ViolationType> {
-    if text.is_empty() {
+    if text.trim().is_empty() {
         return None;
     }
 
     let normalized = normalize_text(text);
 
     //
-    // Prioridade máxima — fixo no binário,
-    // não depende de configuração externa.
+    // Prioridade máxima:
+    // sempre ativo e independente de configuração.
     //
     if csam::is_csam(&normalized) {
         return Some(ViolationType::Csam);
@@ -87,12 +40,19 @@ pub async fn analyze_message(
         return Some(ViolationType::Gambling);
     }
 
-    // Links suspeitos: combina a lista fixa do moderation.toml
-    // com os domínios adicionados via /blockdomain (banco).
     if links::is_suspicious_link(&normalized, &rules.links.domains) {
         return Some(ViolationType::SuspiciousLink);
     }
 
+    if spam::is_spam(&normalized, &rules.spam.keywords) {
+        return Some(ViolationType::Spam);
+    }
+
+    drop(rules);
+
+    //
+    // Domínios adicionados dinamicamente.
+    //
     let blocked_domains = state.blocked_domains.read().await;
 
     if links::is_suspicious_link(&normalized, &blocked_domains) {
@@ -101,16 +61,10 @@ pub async fn analyze_message(
 
     drop(blocked_domains);
 
-    if spam::is_spam(&normalized, &rules.spam.keywords) {
-        return Some(ViolationType::Spam);
-    }
-
-    // Libera o lock explicitamente — não precisamos mais
-    // das regras a partir daqui.
-    drop(rules);
-
     //
-    // Encaminhamentos longos
+    // Heurística:
+    // mensagens encaminhadas muito longas
+    // possuem comportamento típico de spam.
     //
     if event.is_forwarded() && normalized.len() > 20 {
         return Some(ViolationType::Spam);
@@ -119,7 +73,7 @@ pub async fn analyze_message(
     None
 }
 
-/// Apenas verifica se existe violação
+/// Apenas verifica existência de violação.
 pub async fn is_violation(text: &str, event: &TelegramEvent, state: &AppState) -> bool {
     analyze_message(text, event, state).await.is_some()
 }

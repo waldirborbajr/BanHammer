@@ -5,10 +5,7 @@ use teloxide::{
 
 use crate::{
     core::state::AppState,
-    i18n::{
-        lang::{Lang, lang_for_chat, set_lang_for_chat},
-        messages,
-    },
+    i18n::{Lang, LanguageManager, messages},
     moderation::engine::{ViolationType, analyze_message},
     storage::sqlite,
     telegram::{admin::is_chat_admin, events::TelegramEvent},
@@ -25,8 +22,7 @@ pub async fn command_handler(
 ) -> ResponseResult<()> {
     let chat_id = msg.chat.id;
 
-    let lang = lang_for_chat(chat_id);
-
+    let lang = LanguageManager::get(&state, chat_id).await;
     match cmd {
         Command::Help => {
             bot.send_message(chat_id, messages::help(lang)).await?;
@@ -41,7 +37,7 @@ pub async fn command_handler(
         }
 
         Command::Language(language) => {
-            handle_language_command(&bot, &msg, lang, language.trim()).await?;
+            handle_language_command(&bot, &msg, &state, lang, language.trim()).await?;
         }
 
         Command::Reload => {
@@ -356,7 +352,7 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
     };
 
     if let Some(violation) = analyze_message(content, &event, &state).await {
-        let lang = lang_for_chat(msg.chat.id);
+        let lang = LanguageManager::get(&state, msg.chat.id).await;
 
         record_violation(&state, &msg, user, violation).await;
 

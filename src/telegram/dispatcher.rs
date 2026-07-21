@@ -1,4 +1,7 @@
-use teloxide::{dispatching::Dispatcher, prelude::*};
+use teloxide::{
+    dispatching::Dispatcher,
+    prelude::*,
+};
 
 use crate::core::state::AppState;
 
@@ -7,26 +10,29 @@ use super::{
     handlers::{command_handler, message_handler},
 };
 
-/// Inicializa o dispatcher do Telegram
+/// Inicializa o dispatcher do Telegram.
+///
+/// Responsabilidades:
+///
+/// - registrar handlers;
+/// - injetar dependências globais;
+/// - iniciar o loop principal do bot.
 pub async fn run(bot: Bot, state: AppState) {
+    log::info!("Starting Telegram dispatcher...");
+
+    let command_branch = dptree::entry()
+        .filter_command::<Command>()
+        .endpoint(command_handler);
+
+    let message_branch = dptree::entry()
+        .endpoint(message_handler);
+
     let handler = Update::filter_message()
-        // Processa comandos:
-        // /help
-        // /status
-        // /language
-        .branch(
-            dptree::entry()
-                .filter_command::<Command>()
-                .endpoint(command_handler),
-        )
-        // Processa mensagens normais:
-        // texto, links, spam, conteúdo proibido
-        .branch(dptree::entry().endpoint(message_handler));
+        .branch(command_branch)
+        .branch(message_branch);
 
     Dispatcher::builder(bot, handler)
-        // Injeta dependências globais nos handlers
         .dependencies(dptree::deps![state])
-        // Permite finalizar com CTRL+C
         .enable_ctrlc_handler()
         .build()
         .dispatch()

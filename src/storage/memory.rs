@@ -5,68 +5,83 @@ use std::{
 
 use tokio::sync::RwLock;
 
-/// Estado temporário em memória.
+/// Armazena estado temporário utilizado durante
+/// a execução do bot.
 ///
-/// Todos os dados aqui são perdidos
-/// quando o processo é reiniciado.
+/// Nenhuma informação aqui é persistida.
+/// Todo o conteúdo é perdido ao reiniciar o processo.
 #[derive(Clone, Default)]
-#[allow(dead_code)] // ← Adicione esta linha
 pub struct MemoryStorage {
-    /// Idioma configurado por grupo.
+    /// Cache do idioma configurado por chat.
+    ///
+    /// A fonte oficial permanece no banco de dados.
     chat_languages: Arc<RwLock<HashMap<i64, String>>>,
 
-    /// Usuários que já foram processados
-    /// durante o ciclo atual.
-    processed_users: Arc<RwLock<HashSet<i64>>>,
+    /// Updates já processados.
+    ///
+    /// Evita processar o mesmo Update do Telegram
+    /// mais de uma vez.
+    processed_updates: Arc<RwLock<HashSet<i32>>>,
 
-    /// Contador de violações por usuário.
+    /// Contador temporário de violações por usuário.
     violation_counter: Arc<RwLock<HashMap<i64, u32>>>,
 }
 
 impl MemoryStorage {
-    /// Cria uma nova instância vazia.
+    /// Cria uma nova instância.
     pub fn new() -> Self {
         Self::default()
     }
 
-    // =========================
-    // CHAT LANGUAGE
-    // =========================
+    // ============================================================
+    // CHAT LANGUAGE CACHE
+    // ============================================================
 
-    pub async fn set_chat_language(&self, chat_id: i64, language: String) {
-        self.chat_languages.write().await.insert(chat_id, language);
+    /// Atualiza o idioma em cache.
+    pub async fn set_chat_language(&self, chat_id: i64, language: impl Into<String>) {
+        self.chat_languages
+            .write()
+            .await
+            .insert(chat_id, language.into());
     }
 
+    /// Obtém o idioma do cache.
     pub async fn get_chat_language(&self, chat_id: i64) -> Option<String> {
         self.chat_languages.read().await.get(&chat_id).cloned()
     }
 
-    // =========================
-    // PROCESSED USERS
-    // =========================
+    // ============================================================
+    // PROCESSED UPDATES
+    // ============================================================
 
-    pub async fn mark_user_processed(&self, user_id: i64) {
-        self.processed_users.write().await.insert(user_id);
+    /// Marca um Update como processado.
+    pub async fn mark_update_processed(&self, update_id: i32) {
+        self.processed_updates.write().await.insert(update_id);
     }
 
-    pub async fn was_user_processed(&self, user_id: i64) -> bool {
-        self.processed_users.read().await.contains(&user_id)
+    /// Verifica se um Update já foi processado.
+    pub async fn was_update_processed(&self, update_id: i32) -> bool {
+        self.processed_updates.read().await.contains(&update_id)
     }
 
-    // =========================
+    // ============================================================
     // VIOLATIONS
-    // =========================
+    // ============================================================
 
+    /// Incrementa o contador de violações.
+    ///
+    /// Retorna o número atual de violações.
     pub async fn add_violation(&self, user_id: i64) -> u32 {
         let mut counter = self.violation_counter.write().await;
 
-        let value = counter.entry(user_id).or_insert(0);
+        let entry = counter.entry(user_id).or_insert(0);
 
-        *value += 1;
+        *entry += 1;
 
-        *value
+        *entry
     }
 
+    /// Obtém o número atual de violações.
     pub async fn get_violation_count(&self, user_id: i64) -> u32 {
         self.violation_counter
             .read()
@@ -76,12 +91,8 @@ impl MemoryStorage {
             .unwrap_or(0)
     }
 
-    /// Limpa todo estado temporário.
-    pub async fn clear(&self) {
-        self.chat_languages.write().await.clear();
-
-        self.processed_users.write().await.clear();
-
-        self.violation_counter.write().await.clear();
+    /// Remove o histórico de violações de um usuário.
+    pub async fn reset_violation_count(&self, user_id: i64) {
+        self.violation_counter.write().await.remove(&user_id);
     }
 }

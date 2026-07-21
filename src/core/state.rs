@@ -1,39 +1,50 @@
+use std::sync::Arc;
+
+use sqlx::SqlitePool;
+use tokio::sync::RwLock;
+
 use crate::{
     core::config::Config,
     moderation::rules::{self, ModerationRules},
     storage::{memory::MemoryStorage, sqlite},
 };
 
-use std::sync::Arc;
-
-use sqlx::SqlitePool;
-use tokio::sync::RwLock;
-
+/// Estado compartilhado da aplicação.
+///
+/// Esta estrutura é clonada pelos handlers do Telegram.
+/// Recursos compartilhados ficam protegidos por `Arc` para
+/// evitar cópias desnecessárias e permitir acesso concorrente.
 #[derive(Clone)]
 pub struct AppState {
+    /// Configuração carregada na inicialização.
     pub config: Config,
 
-    pub memory: MemoryStorage,
+    /// Estado temporário em memória.
+    pub memory: Arc<MemoryStorage>,
 
-    /// Regras de moderação carregadas de `config/moderation.toml`.
+    /// Regras de moderação carregadas de
+    /// `config/moderation.toml`.
     ///
-    /// Fica atrás de um `Arc<RwLock<..>>` para poder ser
-    /// recarregada em runtime (comando /reload) e refletir
-    /// imediatamente em todos os clones do AppState.
+    /// Podem ser recarregadas em runtime através
+    /// do comando `/reload`.
     pub moderation: Arc<RwLock<ModerationRules>>,
 
-    /// Domínios bloqueados via /blockdomain (tabela `blocked_domains`).
+    /// Lista de domínios bloqueados.
     ///
-    /// Mantido em memória (carregado do banco no boot) para não
-    /// bater no SQLite a cada mensagem — só é atualizado quando
-    /// um admin roda /blockdomain.
+    /// É carregada do SQLite durante o boot e mantida
+    /// em memória para evitar consultas ao banco a
+    /// cada mensagem processada.
     pub blocked_domains: Arc<RwLock<Vec<String>>>,
 
+    /// Pool de conexões SQLite.
     pub db: SqlitePool,
 }
 
 impl AppState {
-    pub async fn new(config: Config) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    /// Inicializa todo o estado da aplicação.
+    pub async fn new(
+        config: Config,
+    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let moderation = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let db = sqlite::init_database(&config.database_url).await?;
@@ -43,7 +54,7 @@ impl AppState {
         Ok(Self {
             config,
 
-            memory: MemoryStorage::new(),
+            memory: Arc::new(MemoryStorage::new()),
 
             moderation: Arc::new(RwLock::new(moderation)),
 
@@ -53,13 +64,14 @@ impl AppState {
         })
     }
 
-    /// Recarrega `config/moderation.toml` do disco e substitui
-    /// as regras em memória, sem reiniciar o processo.
+    /// Recarrega `config/moderation.toml` sem reiniciar
+    /// o processo.
     ///
-    /// Retorna erro se o arquivo não existir, tiver TOML inválido,
-    /// ou falhar na validação (alguma seção vazia) — nesse caso
-    /// as regras antigas continuam valendo.
-    pub async fn reload_moderation(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    /// Em caso de erro, as regras atualmente carregadas
+    /// permanecem válidas.
+    pub async fn reload_moderation(
+        &self,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let fresh = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let mut guard = self.moderation.write().await;
@@ -69,12 +81,14 @@ impl AppState {
         Ok(())
     }
 
-    /// Adiciona um domínio à lista de bloqueio: persiste no SQLite
-    /// e atualiza a cópia em memória usada pelo motor de moderação.
+    /// Adiciona um domínio à lista de bloqueio.
     ///
-    /// Idempotente — bloquear o mesmo domínio duas vezes não gera erro
-    /// nem duplicata (a query usa `INSERT OR IGNORE`).
-    pub async fn add_blocked_domain(&self, domain: &str) -> Result<(), sqlx::Error> {
+    /// A alteração é persistida no SQLite e refletida
+    /// imediatamente na cópia mantida em memória.
+    pub async fn add_blocked_domain(
+        &self,
+        domain: &str,
+    ) -> Result<(), sqlx::Error> {
         let normalized = domain.trim().to_lowercase();
 
         sqlite::add_blocked_domain(&self.db, &normalized).await?;
