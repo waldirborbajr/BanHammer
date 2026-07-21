@@ -28,15 +28,7 @@
     }
   },
 
-  "features": {
-    "ghcr.io/devcontainers/features/common-utils:1": {
-      "configureZshAsDefaultShell": true,
-      "installOhMyZsh": true,
-      "nonFreePackages": true
-    }
-  },
-
-  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y just ripgrep fd-find bat git-delta hyperfine valgrind lldb && cargo install --locked cargo-binstall && cargo binstall -y --locked cargo-nextest cargo-edit cargo-watch cargo-expand cargo-outdated cargo-audit cargo-udeps cargo-semver-checks cargo-flamegraph cargo-llvm-lines cargo-tarpaulin cargo-instruments && rustup component add rustfmt clippy rust-src rust-analyzer && echo '🚀 Rust Power User Environment loaded successfully!'",
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y zsh ripgrep fd-find bat git-delta hyperfine valgrind lldb && sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" \"\" --unattended && cargo install --locked cargo-binstall && cargo binstall -y --locked cargo-nextest cargo-edit cargo-watch cargo-expand cargo-outdated cargo-audit cargo-udeps cargo-semver-checks cargo-flamegraph cargo-llvm-lines cargo-tarpaulin && rustup component add rustfmt clippy rust-src rust-analyzer && echo '🚀 Rust Power User Environment loaded successfully!' && echo 'export PATH=$PATH:/usr/local/cargo/bin' >> ~/.zshrc",
 
   "postStartCommand": "rustc --version && cargo --version && cargo nextest --version",
 
