@@ -10,7 +10,7 @@ Roadmap de features sugeridas, organizadas por área. Não estão em ordem de pr
   Hoje qualquer violação bane na hora — rígido demais para spam/gambling (severidade baixa), correto para csam/pornografia.
   _Esforço: médio · Impacto: alto_
 
-- [ ] **Comando `/unban` ou `/appeal`** para admin reverter um banimento incorreto sem sair do Telegram.
+- [x] **Comando `/unban` ou `/appeal`** para admin reverter um banimento incorreto sem sair do Telegram.
   _Esforço: baixo · Impacto: médio_
 
 - [ ] **Whitelist de usuários confiáveis** — membros antigos sem histórico de violação recebem checagem mais branda.
@@ -28,7 +28,7 @@ Roadmap de features sugeridas, organizadas por área. Não estão em ordem de pr
   Comando `/blockdomain <dominio>` para admins adicionarem na hora, sem editar TOML e reiniciar.
   _Esforço: baixo · Impacto: médio_
 
-- [ ] **Comando `/reload`** — recarrega `moderation.toml` em runtime sem reiniciar o processo.
+- [x] **Comando `/reload`** — recarrega `moderation.toml` em runtime sem reiniciar o processo.
   Faz sentido agora que a config é externa (ver histórico de migração keyword/domain → TOML).
   _Esforço: baixo · Impacto: médio_
 
