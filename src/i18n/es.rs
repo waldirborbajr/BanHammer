@@ -31,29 +31,18 @@ Comandos disponibles:
     )
 }
 
-
-pub const STATUS: &str =
-    "🟢 BanHammer está en línea y protegiendo este grupo.";
-
+pub const STATUS: &str = "🟢 BanHammer está en línea y protegiendo este grupo.";
 
 pub const VIOLATION_GENERIC: &str =
     "🚫 Se ha detectado contenido prohibido y se han aplicado las medidas correspondientes.";
 
-
 pub fn BANNED(username: &str) -> String {
-    format!(
-        "🚫 @{username} ha sido expulsado por infringir las normas."
-    )
+    format!("🚫 @{username} ha sido expulsado por infringir las normas.")
 }
 
+pub const LANG_SET: &str = "✅ El idioma del grupo se ha cambiado correctamente a Español.";
 
-pub const LANG_SET: &str =
-    "✅ El idioma del grupo se ha cambiado correctamente a Español.";
-
-
-pub const LANG_INVALID: &str =
-    "⚠️ Idioma no válido. Utiliza: pt, en o es.";
-
+pub const LANG_INVALID: &str = "⚠️ Idioma no válido. Utiliza: pt, en o es.";
 
 pub const LANG_NO_PERMISSION: &str =
     "⛔ Solo los administradores pueden cambiar el idioma del grupo.";
@@ -66,8 +55,7 @@ pub const STATS_TOP: &str = "Principales infractores";
 pub const STATS_EMPTY: &str = "✅ Todavía no hay violaciones registradas en este grupo.";
 
 pub const RELOAD_SUCCESS: &str = "✅ Configuración de moderación recargada correctamente.";
-pub const RELOAD_ERROR: &str =
-    "⚠️ Error al recargar moderation.toml. Las reglas anteriores siguen activas. Revisa los logs del bot.";
+pub const RELOAD_ERROR: &str = "⚠️ Error al recargar moderation.toml. Las reglas anteriores siguen activas. Revisa los logs del bot.";
 pub const RELOAD_NO_PERMISSION: &str =
     "⚠️ Solo los administradores pueden recargar la configuración.";
 
@@ -78,5 +66,4 @@ pub fn UNBAN_SUCCESS(user_id: u64) -> String {
     format!("✅ El usuario `{user_id}` ha sido desbaneado.")
 }
 
-pub const UNBAN_ERROR: &str =
-    "⚠️ Error al desbanear al usuario. Verifica que el ID sea correcto y que el bot tenga permisos de administrador.";
+pub const UNBAN_ERROR: &str = "⚠️ Error al desbanear al usuario. Verifica que el ID sea correcto y que el bot tenga permisos de administrador.";

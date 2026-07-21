@@ -45,7 +45,12 @@ impl fmt::Display for ValidationError {
 impl std::error::Error for ValidationError {}
 
 impl ModerationRules {
-    pub fn load(path: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    /// `Send + Sync` no tipo de erro é necessário porque este método
+    /// é chamado dentro do handler `/reload`, e o dptree (teloxide)
+    /// exige que o Future de cada endpoint seja `Send`. Um
+    /// `Box<dyn Error>` comum não é `Send` e quebra a injeção de
+    /// dependência do dispatcher (erro `Injectable<...>` no build).
+    pub fn load(path: &str) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let content = fs::read_to_string(path)?;
 
         let rules = toml::from_str::<ModerationRules>(&content)?;
@@ -66,7 +71,9 @@ impl ModerationRules {
         }
 
         if self.gambling.keywords.is_empty() {
-            return Err(ValidationError { section: "gambling" });
+            return Err(ValidationError {
+                section: "gambling",
+            });
         }
 
         if self.spam.keywords.is_empty() {

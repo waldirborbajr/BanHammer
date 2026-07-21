@@ -43,8 +43,7 @@ pub const STATS_TOP: &str = "Top infratores";
 pub const STATS_EMPTY: &str = "✅ Nenhuma violação registrada neste grupo ainda.";
 
 pub const RELOAD_SUCCESS: &str = "✅ Configuração de moderação recarregada com sucesso.";
-pub const RELOAD_ERROR: &str =
-    "⚠️ Falha ao recarregar moderation.toml. As regras antigas continuam ativas. Veja os logs do bot.";
+pub const RELOAD_ERROR: &str = "⚠️ Falha ao recarregar moderation.toml. As regras antigas continuam ativas. Veja os logs do bot.";
 pub const RELOAD_NO_PERMISSION: &str = "⚠️ Apenas administradores podem recarregar a configuração.";
 
 pub const UNBAN_NO_PERMISSION: &str = "⚠️ Apenas administradores podem remover banimentos.";
@@ -54,5 +53,4 @@ pub fn UNBAN_SUCCESS(user_id: u64) -> String {
     format!("✅ Usuário `{user_id}` foi desbanido.")
 }
 
-pub const UNBAN_ERROR: &str =
-    "⚠️ Falha ao desbanir o usuário. Verifique se o ID está correto e se o bot tem permissão de admin.";
+pub const UNBAN_ERROR: &str = "⚠️ Falha ao desbanir o usuário. Verifique se o ID está correto e se o bot tem permissão de admin.";

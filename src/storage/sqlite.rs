@@ -239,7 +239,12 @@ pub async fn get_chat_stats(pool: &SqlitePool, chat_id: i64) -> Result<ChatStats
 
     let by_type = by_type_rows
         .into_iter()
-        .map(|row| (row.get::<String, _>("violation_type"), row.get::<i64, _>("c")))
+        .map(|row| {
+            (
+                row.get::<String, _>("violation_type"),
+                row.get::<i64, _>("c"),
+            )
+        })
         .collect();
 
     let top_rows = sqlx::query(

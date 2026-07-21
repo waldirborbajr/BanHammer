@@ -26,7 +26,7 @@ pub struct AppState {
 }
 
 impl AppState {
-    pub async fn new(config: Config) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn new(config: Config) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let moderation = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let db = sqlite::init_database(&config.database_url).await?;
@@ -48,7 +48,7 @@ impl AppState {
     /// Retorna erro se o arquivo não existir, tiver TOML inválido,
     /// ou falhar na validação (alguma seção vazia) — nesse caso
     /// as regras antigas continuam valendo.
-    pub async fn reload_moderation(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn reload_moderation(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let fresh = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let mut guard = self.moderation.write().await;
