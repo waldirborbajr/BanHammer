@@ -2,6 +2,9 @@ use serde::Deserialize;
 use std::fmt;
 use std::fs;
 
+/// Caminho padrão do arquivo de regras de moderação.
+pub const CONFIG_PATH: &str = "config/moderation.toml";
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct ModerationRules {
     pub pornography: KeywordGroup,
