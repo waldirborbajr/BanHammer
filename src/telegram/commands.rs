@@ -19,4 +19,12 @@ pub enum Command {
     /// Altera o idioma do grupo
     #[command(description = "Idioma: pt|en|es / Language: pt|en|es")]
     Language(String),
+
+    /// Recarrega config/moderation.toml sem reiniciar o bot
+    #[command(description = "Recarrega moderation.toml (admin) / Reload config (admin)")]
+    Reload,
+
+    /// Remove o banimento de um usuário: /unban <user_id>
+    #[command(description = "/unban <user_id> — remove banimento (admin)")]
+    Unban(String),
 }
