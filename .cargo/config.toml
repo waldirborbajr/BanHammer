@@ -1,0 +1,5 @@
+[alias]
+b = "build"
+r = "run"
+c = "clippy --all-targets --all-features"
+call = "clippy --all-targets --all-features -- -D warnings"
