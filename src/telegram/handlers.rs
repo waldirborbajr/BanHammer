@@ -1,6 +1,6 @@
 use teloxide::{
     prelude::*,
-    types::{ParseMode, User},
+    types::{ParseMode, User, UserId},
 };
 
 use crate::{
@@ -92,6 +92,32 @@ pub async fn command_handler(
             )
             .await?;
         }
+
+
+
+        Command::Reload => {
+
+            handle_reload_command(
+                &bot,
+                &msg,
+                &state,
+                lang,
+            )
+            .await?;
+        }
+
+
+
+        Command::Unban(argument) => {
+
+            handle_unban_command(
+                &bot,
+                &msg,
+                lang,
+                argument.trim(),
+            )
+            .await?;
+        }
     }
 
 
@@ -165,6 +191,196 @@ async fn handle_language_command(
             bot.send_message(
                 chat_id,
                 messages::lang_invalid(lang),
+            )
+            .await?;
+        }
+    }
+
+
+    Ok(())
+}
+
+
+
+
+/// Recarrega config/moderation.toml em runtime,
+/// sem reiniciar o processo. Apenas administradores.
+async fn handle_reload_command(
+    bot: &Bot,
+    msg: &Message,
+    state: &AppState,
+    lang: Lang,
+) -> ResponseResult<()> {
+
+
+    let chat_id =
+        msg.chat.id;
+
+
+    let Some(user) = &msg.from else {
+        return Ok(());
+    };
+
+
+    if !is_chat_admin(
+        bot,
+        chat_id,
+        user.id,
+    )
+    .await {
+
+
+        bot.send_message(
+            chat_id,
+            messages::reload_no_permission(lang),
+        )
+        .await?;
+
+
+        return Ok(());
+    }
+
+
+    match state.reload_moderation().await {
+
+
+        Ok(_) => {
+
+            bot.send_message(
+                chat_id,
+                messages::reload_success(lang),
+            )
+            .await?;
+
+
+            log::info!(
+                "moderation.toml recarregado por {} no chat {}",
+                user.id,
+                chat_id
+            );
+        }
+
+
+
+        Err(error) => {
+
+            log::warn!(
+                "Falha ao recarregar moderation.toml: {}",
+                error
+            );
+
+
+            bot.send_message(
+                chat_id,
+                messages::reload_error(lang),
+            )
+            .await?;
+        }
+    }
+
+
+    Ok(())
+}
+
+
+
+
+/// Remove o banimento de um usuário via /unban <user_id>.
+/// Apenas administradores. Requer o ID numérico do usuário
+/// (não é possível resolver @username de alguém já banido
+/// via API do Telegram de forma confiável).
+async fn handle_unban_command(
+    bot: &Bot,
+    msg: &Message,
+    lang: Lang,
+    argument: &str,
+) -> ResponseResult<()> {
+
+
+    let chat_id =
+        msg.chat.id;
+
+
+    let Some(admin) = &msg.from else {
+        return Ok(());
+    };
+
+
+    if !is_chat_admin(
+        bot,
+        chat_id,
+        admin.id,
+    )
+    .await {
+
+
+        bot.send_message(
+            chat_id,
+            messages::unban_no_permission(lang),
+        )
+        .await?;
+
+
+        return Ok(());
+    }
+
+
+    let Ok(raw_id) = argument.parse::<u64>() else {
+
+        bot.send_message(
+            chat_id,
+            messages::unban_invalid_id(lang),
+        )
+        .await?;
+
+        return Ok(());
+    };
+
+
+    let target =
+        UserId(raw_id);
+
+
+    match bot
+        .unban_chat_member(
+            chat_id,
+            target,
+        )
+        .await
+    {
+
+
+        Ok(_) => {
+
+            bot.send_message(
+                chat_id,
+                messages::unban_success(lang, raw_id),
+            )
+            .await?;
+
+
+            log::info!(
+                "Usuário {} desbanido por {} no chat {}",
+                raw_id,
+                admin.id,
+                chat_id
+            );
+        }
+
+
+
+        Err(error) => {
+
+            log::warn!(
+                "Falha ao desbanir {}: {}",
+                raw_id,
+                error
+            );
+
+
+            bot.send_message(
+                chat_id,
+                messages::unban_error(lang),
             )
             .await?;
         }
@@ -310,7 +526,9 @@ pub async fn message_handler(
         content,
         &event,
         &state,
-    ) {
+    )
+    .await
+    {
 
 
         let lang =
