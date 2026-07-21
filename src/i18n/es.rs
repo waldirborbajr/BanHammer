@@ -22,7 +22,11 @@ Comandos disponibles:
 
 /stats - Muestra estadísticas de moderación del grupo.
 
-/language <pt|en|es> - Cambia el idioma del grupo (solo administradores)."#,
+/language <pt|en|es> - Cambia el idioma del grupo (solo administradores).
+
+/reload - Recarga moderation.toml sin reiniciar el bot (solo administradores).
+
+/unban <user_id> - Elimina el baneo de un usuario (solo administradores)."#,
         env!("CARGO_PKG_VERSION")
     )
 }
@@ -60,3 +64,19 @@ pub const STATS_24H: &str = "Últimas 24h";
 pub const STATS_BY_TYPE: &str = "Por categoría";
 pub const STATS_TOP: &str = "Principales infractores";
 pub const STATS_EMPTY: &str = "✅ Todavía no hay violaciones registradas en este grupo.";
+
+pub const RELOAD_SUCCESS: &str = "✅ Configuración de moderación recargada correctamente.";
+pub const RELOAD_ERROR: &str =
+    "⚠️ Error al recargar moderation.toml. Las reglas anteriores siguen activas. Revisa los logs del bot.";
+pub const RELOAD_NO_PERMISSION: &str =
+    "⚠️ Solo los administradores pueden recargar la configuración.";
+
+pub const UNBAN_NO_PERMISSION: &str = "⚠️ Solo los administradores pueden eliminar baneos.";
+pub const UNBAN_INVALID_ID: &str = "⚠️ Uso: `/unban <user_id>` — el ID debe ser numérico.";
+
+pub fn UNBAN_SUCCESS(user_id: u64) -> String {
+    format!("✅ El usuario `{user_id}` ha sido desbaneado.")
+}
+
+pub const UNBAN_ERROR: &str =
+    "⚠️ Error al desbanear al usuario. Verifica que el ID sea correcto y que el bot tenga permisos de administrador.";
