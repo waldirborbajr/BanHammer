@@ -92,7 +92,10 @@ impl ViolationType {
 /// - Detectores internos (fixos e configuráveis)
 /// - Tipo de evento Telegram
 ///
-pub fn analyze_message(
+/// As regras configuráveis são lidas através de um `RwLock`
+/// (ver `AppState::reload_moderation`), então esta função
+/// é assíncrona.
+pub async fn analyze_message(
     text: &str,
     event: &TelegramEvent,
     state: &AppState,
@@ -125,10 +128,14 @@ pub fn analyze_message(
 
 
 
+    let rules =
+        state.moderation.read().await;
+
+
 
     if pornography::is_pornography(
         &normalized,
-        &state.moderation.pornography.keywords,
+        &rules.pornography.keywords,
     ) {
 
         return Some(
@@ -141,7 +148,7 @@ pub fn analyze_message(
 
     if gambling::is_gambling(
         &normalized,
-        &state.moderation.gambling.keywords,
+        &rules.gambling.keywords,
     ) {
 
         return Some(
@@ -154,7 +161,7 @@ pub fn analyze_message(
 
     if links::is_suspicious_link(
         &normalized,
-        &state.moderation.links.domains,
+        &rules.links.domains,
     ) {
 
         return Some(
@@ -167,7 +174,7 @@ pub fn analyze_message(
 
     if spam::is_spam(
         &normalized,
-        &state.moderation.spam.keywords,
+        &rules.spam.keywords,
     ) {
 
         return Some(
@@ -175,6 +182,11 @@ pub fn analyze_message(
         );
     }
 
+
+
+    // Libera o lock explicitamente — não precisamos mais
+    // das regras a partir daqui.
+    drop(rules);
 
 
 
@@ -201,7 +213,7 @@ pub fn analyze_message(
 
 
 /// Apenas verifica se existe violação
-pub fn is_violation(
+pub async fn is_violation(
     text: &str,
     event: &TelegramEvent,
     state: &AppState,
@@ -213,5 +225,6 @@ pub fn is_violation(
         event,
         state,
     )
+    .await
     .is_some()
 }
