@@ -104,3 +104,66 @@ pub fn stats_labels(lang: Lang) -> StatsLabels {
         },
     }
 }
+
+/// Config recarregada com sucesso
+pub fn reload_success(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::RELOAD_SUCCESS,
+        Lang::En => en::RELOAD_SUCCESS,
+        Lang::Es => es::RELOAD_SUCCESS,
+    }
+}
+
+/// Falha ao recarregar config
+pub fn reload_error(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::RELOAD_ERROR,
+        Lang::En => en::RELOAD_ERROR,
+        Lang::Es => es::RELOAD_ERROR,
+    }
+}
+
+/// Sem permissão para recarregar config
+pub fn reload_no_permission(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::RELOAD_NO_PERMISSION,
+        Lang::En => en::RELOAD_NO_PERMISSION,
+        Lang::Es => es::RELOAD_NO_PERMISSION,
+    }
+}
+
+/// Sem permissão para desbanir
+pub fn unban_no_permission(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::UNBAN_NO_PERMISSION,
+        Lang::En => en::UNBAN_NO_PERMISSION,
+        Lang::Es => es::UNBAN_NO_PERMISSION,
+    }
+}
+
+/// Argumento de /unban inválido (não é um user_id numérico)
+pub fn unban_invalid_id(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::UNBAN_INVALID_ID,
+        Lang::En => en::UNBAN_INVALID_ID,
+        Lang::Es => es::UNBAN_INVALID_ID,
+    }
+}
+
+/// Usuário desbanido com sucesso
+pub fn unban_success(lang: Lang, user_id: u64) -> String {
+    match lang {
+        Lang::Pt => pt::UNBAN_SUCCESS(user_id),
+        Lang::En => en::UNBAN_SUCCESS(user_id),
+        Lang::Es => es::UNBAN_SUCCESS(user_id),
+    }
+}
+
+/// Falha ao desbanir
+pub fn unban_error(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::UNBAN_ERROR,
+        Lang::En => en::UNBAN_ERROR,
+        Lang::Es => es::UNBAN_ERROR,
+    }
+}
