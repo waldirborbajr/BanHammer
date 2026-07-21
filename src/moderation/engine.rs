@@ -89,8 +89,7 @@ impl ViolationType {
 
 /// Analisa uma mensagem usando:
 ///
-/// - Detectores internos
-/// - Regras externas TOML
+/// - Detectores internos (fixos e configuráveis)
 /// - Tipo de evento Telegram
 ///
 pub fn analyze_message(
@@ -112,7 +111,8 @@ pub fn analyze_message(
 
 
     //
-    // Prioridade máxima
+    // Prioridade máxima — fixo no binário,
+    // não depende de configuração externa.
     //
     if csam::is_csam(
         &normalized,
@@ -179,22 +179,6 @@ pub fn analyze_message(
 
 
     //
-    // Regras externas TOML (apenas csam continua checado aqui)
-    //
-    if matches_external_rules(
-        &normalized,
-        state,
-    ) {
-
-        return Some(
-            ViolationType::Csam
-        );
-    }
-
-
-
-
-    //
     // Encaminhamentos longos
     //
     if event.is_forwarded()
@@ -209,35 +193,6 @@ pub fn analyze_message(
 
 
     None
-}
-
-
-
-
-
-
-/// Verifica palavras configuradas externamente
-/// em moderation.toml (csam)
-fn matches_external_rules(
-    text: &str,
-    state: &AppState,
-) -> bool {
-
-
-    let rules =
-        &state.moderation;
-
-
-    rules
-        .csam
-        .keywords
-        .iter()
-        .any(
-            |keyword|
-                text.contains(
-                    &keyword.to_lowercase()
-                )
-        )
 }
 
 
