@@ -246,7 +246,7 @@ async fn handle_stats_command(
     }
 
     bot.send_message(chat_id, text)
-        .parse_mode(ParseMode::Markdown)
+        .parse_mode(ParseMode::MarkdownV2)
         .await?;
 
     Ok(())
