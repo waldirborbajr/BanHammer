@@ -18,6 +18,7 @@ fmt:
 
 fix:
     cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features -- -D warnings
+    
 
 test:
     cargo test
