@@ -17,7 +17,7 @@ fmt:
     cargo fmt --all
 
 fix:
-    cargo clippy --fix --allow-dirty --allow-staged
+    cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features -- -D warnings
 
 test:
     cargo test
