@@ -1,7 +1,8 @@
 [package]
-name = "banhammer" 
+name = "banhammer"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 
 [dependencies]
 teloxide = { version = "0.13", features = ["macros", "ctrlc_handler"] }
@@ -13,17 +14,10 @@ lazy_static = "1.5"
 url = "2"
 sqlx = { version = "0.8", features = [
     "runtime-tokio",
-    "sqlite",
-    "macros"
+    "sqlite"
 ] }
 serde = { version = "1", features = ["derive"] }
 toml = "0.8"
-
-[alias]
-b = "build"
-r = "run"
-c = "clippy --all-targets --all-features"
-call = "clippy --all-targets --all-features -- -D warnings"
 
 [profile.release]
 # === Otimizações de VELOCIDADE ===
@@ -50,4 +44,3 @@ overflow-checks = false
 # Flags avançadas (Rust 1.80+)
 #[profile.release.build-override]
 #opt-level = 3
-
