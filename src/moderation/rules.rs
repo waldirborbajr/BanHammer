@@ -9,8 +9,6 @@ pub struct ModerationRules {
 
     pub spam: KeywordGroup,
 
-    pub csam: KeywordGroup,
-
     pub links: LinkGroup,
 }
 
