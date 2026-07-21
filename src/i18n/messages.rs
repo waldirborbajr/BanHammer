@@ -21,9 +21,9 @@ pub fn status(lang: Lang) -> &'static str {
 /// Usuário banido
 pub fn banned(lang: Lang, username: &str) -> String {
     match lang {
-        Lang::Pt => pt::BANNED(username),
-        Lang::En => en::BANNED(username),
-        Lang::Es => es::BANNED(username),
+        Lang::Pt => pt::banned(username),
+        Lang::En => en::banned(username),
+        Lang::Es => es::banned(username),
     }
 }
 
@@ -153,9 +153,9 @@ pub fn unban_invalid_id(lang: Lang) -> &'static str {
 /// Usuário desbanido com sucesso
 pub fn unban_success(lang: Lang, user_id: u64) -> String {
     match lang {
-        Lang::Pt => pt::UNBAN_SUCCESS(user_id),
-        Lang::En => en::UNBAN_SUCCESS(user_id),
-        Lang::Es => es::UNBAN_SUCCESS(user_id),
+        Lang::Pt => pt::unban_success(user_id),
+        Lang::En => en::unban_success(user_id),
+        Lang::Es => es::unban_success(user_id),
     }
 }
 
@@ -165,5 +165,41 @@ pub fn unban_error(lang: Lang) -> &'static str {
         Lang::Pt => pt::UNBAN_ERROR,
         Lang::En => en::UNBAN_ERROR,
         Lang::Es => es::UNBAN_ERROR,
+    }
+}
+
+/// Sem permissão para bloquear domínio
+pub fn blockdomain_no_permission(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::BLOCKDOMAIN_NO_PERMISSION,
+        Lang::En => en::BLOCKDOMAIN_NO_PERMISSION,
+        Lang::Es => es::BLOCKDOMAIN_NO_PERMISSION,
+    }
+}
+
+/// Argumento de /blockdomain inválido (vazio)
+pub fn blockdomain_invalid(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::BLOCKDOMAIN_INVALID,
+        Lang::En => en::BLOCKDOMAIN_INVALID,
+        Lang::Es => es::BLOCKDOMAIN_INVALID,
+    }
+}
+
+/// Domínio bloqueado com sucesso
+pub fn blockdomain_success(lang: Lang, domain: &str) -> String {
+    match lang {
+        Lang::Pt => pt::BLOCKDOMAIN_SUCCESS(domain),
+        Lang::En => en::BLOCKDOMAIN_SUCCESS(domain),
+        Lang::Es => es::BLOCKDOMAIN_SUCCESS(domain),
+    }
+}
+
+/// Falha ao bloquear domínio
+pub fn blockdomain_error(lang: Lang) -> &'static str {
+    match lang {
+        Lang::Pt => pt::BLOCKDOMAIN_ERROR,
+        Lang::En => en::BLOCKDOMAIN_ERROR,
+        Lang::Es => es::BLOCKDOMAIN_ERROR,
     }
 }

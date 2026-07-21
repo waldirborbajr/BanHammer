@@ -22,6 +22,13 @@ pub struct AppState {
     /// imediatamente em todos os clones do AppState.
     pub moderation: Arc<RwLock<ModerationRules>>,
 
+    /// Domínios bloqueados via /blockdomain (tabela `blocked_domains`).
+    ///
+    /// Mantido em memória (carregado do banco no boot) para não
+    /// bater no SQLite a cada mensagem — só é atualizado quando
+    /// um admin roda /blockdomain.
+    pub blocked_domains: Arc<RwLock<Vec<String>>>,
+
     pub db: SqlitePool,
 }
 
@@ -31,12 +38,16 @@ impl AppState {
 
         let db = sqlite::init_database(&config.database_url).await?;
 
+        let blocked_domains = sqlite::get_blocked_domains(&db).await?;
+
         Ok(Self {
             config,
 
             memory: MemoryStorage::new(),
 
             moderation: Arc::new(RwLock::new(moderation)),
+
+            blocked_domains: Arc::new(RwLock::new(blocked_domains)),
 
             db,
         })
@@ -54,6 +65,25 @@ impl AppState {
         let mut guard = self.moderation.write().await;
 
         *guard = fresh;
+
+        Ok(())
+    }
+
+    /// Adiciona um domínio à lista de bloqueio: persiste no SQLite
+    /// e atualiza a cópia em memória usada pelo motor de moderação.
+    ///
+    /// Idempotente — bloquear o mesmo domínio duas vezes não gera erro
+    /// nem duplicata (a query usa `INSERT OR IGNORE`).
+    pub async fn add_blocked_domain(&self, domain: &str) -> Result<(), sqlx::Error> {
+        let normalized = domain.trim().to_lowercase();
+
+        sqlite::add_blocked_domain(&self.db, &normalized).await?;
+
+        let mut guard = self.blocked_domains.write().await;
+
+        if !guard.iter().any(|existing| existing == &normalized) {
+            guard.push(normalized);
+        }
 
         Ok(())
     }

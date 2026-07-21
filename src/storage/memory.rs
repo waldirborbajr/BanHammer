@@ -10,6 +10,7 @@ use tokio::sync::RwLock;
 /// Todos os dados aqui são perdidos
 /// quando o processo é reiniciado.
 #[derive(Clone, Default)]
+#[allow(dead_code)] // ← Adicione esta linha
 pub struct MemoryStorage {
     /// Idioma configurado por grupo.
     chat_languages: Arc<RwLock<HashMap<i64, String>>>,

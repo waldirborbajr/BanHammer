@@ -55,9 +55,9 @@ impl ViolationType {
 /// - Detectores internos (fixos e configuráveis)
 /// - Tipo de evento Telegram
 ///
-/// As regras configuráveis são lidas através de um `RwLock`
-/// (ver `AppState::reload_moderation`), então esta função
-/// é assíncrona.
+/// As regras configuráveis são lidas através de `RwLock`s
+/// (ver `AppState::reload_moderation` e `AppState::add_blocked_domain`),
+/// então esta função é assíncrona.
 pub async fn analyze_message(
     text: &str,
     event: &TelegramEvent,
@@ -87,9 +87,19 @@ pub async fn analyze_message(
         return Some(ViolationType::Gambling);
     }
 
+    // Links suspeitos: combina a lista fixa do moderation.toml
+    // com os domínios adicionados via /blockdomain (banco).
     if links::is_suspicious_link(&normalized, &rules.links.domains) {
         return Some(ViolationType::SuspiciousLink);
     }
+
+    let blocked_domains = state.blocked_domains.read().await;
+
+    if links::is_suspicious_link(&normalized, &blocked_domains) {
+        return Some(ViolationType::SuspiciousLink);
+    }
+
+    drop(blocked_domains);
 
     if spam::is_spam(&normalized, &rules.spam.keywords) {
         return Some(ViolationType::Spam);

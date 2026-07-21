@@ -36,7 +36,7 @@ pub const STATUS: &str = "🟢 BanHammer está en línea y protegiendo este grup
 pub const VIOLATION_GENERIC: &str =
     "🚫 Se ha detectado contenido prohibido y se han aplicado las medidas correspondientes.";
 
-pub fn BANNED(username: &str) -> String {
+pub fn banned(username: &str) -> String {
     format!("🚫 @{username} ha sido expulsado por infringir las normas.")
 }
 
@@ -62,8 +62,20 @@ pub const RELOAD_NO_PERMISSION: &str =
 pub const UNBAN_NO_PERMISSION: &str = "⚠️ Solo los administradores pueden eliminar baneos.";
 pub const UNBAN_INVALID_ID: &str = "⚠️ Uso: `/unban <user_id>` — el ID debe ser numérico.";
 
-pub fn UNBAN_SUCCESS(user_id: u64) -> String {
+pub fn unban_success(user_id: u64) -> String {
     format!("✅ El usuario `{user_id}` ha sido desbaneado.")
 }
 
 pub const UNBAN_ERROR: &str = "⚠️ Error al desbanear al usuario. Verifica que el ID sea correcto y que el bot tenga permisos de administrador.";
+
+// /blockdomain <dominio> - bloquea un dominio al instante (solo administradores)
+
+#[allow(non_snake_case)]
+pub fn BLOCKDOMAIN_SUCCESS(domain: &str) -> String {
+    format!("✅ Dominio `{domain}` bloqueado correctamente.")
+}
+
+pub const BLOCKDOMAIN_NO_PERMISSION: &str = "⚠️ Solo los administradores pueden bloquear dominios.";
+pub const BLOCKDOMAIN_INVALID: &str =
+    "⚠️ Uso: `/blockdomain <dominio>` (ej: /blockdomain spam-site.com).";
+pub const BLOCKDOMAIN_ERROR: &str = "⚠️ Error al bloquear el dominio. Revisa los logs del bot.";

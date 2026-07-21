@@ -27,4 +27,8 @@ pub enum Command {
     /// Remove o banimento de um usuário: /unban <user_id>
     #[command(description = "/unban <user_id> — remove banimento (admin)")]
     Unban(String),
+
+    /// Bloqueia um domínio na hora: /blockdomain <dominio>
+    #[command(description = "/blockdomain <dominio> — bloqueia domínio (admin)")]
+    BlockDomain(String),
 }

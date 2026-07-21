@@ -78,6 +78,7 @@ async fn create_tables(pool: &SqlitePool) -> Result<(), sqlx::Error> {
 }
 
 /// Salva ou atualiza idioma do grupo.
+#[allow(dead_code)]
 pub async fn set_chat_language(
     pool: &SqlitePool,
     chat_id: i64,
@@ -101,6 +102,7 @@ pub async fn set_chat_language(
 }
 
 /// Recupera idioma configurado do grupo.
+#[allow(dead_code)]
 pub async fn get_chat_language(
     pool: &SqlitePool,
     chat_id: i64,
@@ -142,6 +144,33 @@ pub async fn insert_violation(
     .bind(user_id)
     .bind(violation_type)
     .bind(message)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+/// Cria ou atualiza o registro de um usuário (user_id + username).
+///
+/// Usa `COALESCE` para não sobrescrever um username já conhecido
+/// com `NULL` caso o Telegram não informe o username naquele evento
+/// (ex: usuário sem username público).
+pub async fn upsert_user(
+    pool: &SqlitePool,
+    user_id: i64,
+    username: Option<&str>,
+) -> Result<(), sqlx::Error> {
+    sqlx::query(
+        r#"
+        INSERT INTO users(user_id, username)
+        VALUES (?, ?)
+
+        ON CONFLICT(user_id)
+        DO UPDATE SET username = COALESCE(excluded.username, users.username);
+        "#,
+    )
+    .bind(user_id)
+    .bind(username)
     .execute(pool)
     .await?;
 
@@ -193,11 +222,12 @@ pub struct ChatStats {
     /// Contagem por categoria (violation_type, count), ordenado desc.
     pub by_type: Vec<(String, i64)>,
 
-    /// Top 5 usuários com mais violações (user_id, count).
-    pub top_offenders: Vec<(i64, i64)>,
+    /// Top 5 usuários com mais violações (user_id, username opcional, count).
+    pub top_offenders: Vec<(i64, Option<String>, i64)>,
 }
 
-/// Monta as estatísticas de um chat a partir da tabela `violations`.
+/// Monta as estatísticas de um chat a partir da tabela `violations`,
+/// com o username resolvido via LEFT JOIN em `users` quando disponível.
 pub async fn get_chat_stats(pool: &SqlitePool, chat_id: i64) -> Result<ChatStats, sqlx::Error> {
     let total: i64 = sqlx::query(
         r#"
@@ -249,10 +279,11 @@ pub async fn get_chat_stats(pool: &SqlitePool, chat_id: i64) -> Result<ChatStats
 
     let top_rows = sqlx::query(
         r#"
-        SELECT user_id, COUNT(*) as c
-        FROM violations
-        WHERE chat_id = ?
-        GROUP BY user_id
+        SELECT v.user_id AS user_id, u.username AS username, COUNT(*) as c
+        FROM violations v
+        LEFT JOIN users u ON u.user_id = v.user_id
+        WHERE v.chat_id = ?
+        GROUP BY v.user_id
         ORDER BY c DESC
         LIMIT 5
         "#,
@@ -263,7 +294,13 @@ pub async fn get_chat_stats(pool: &SqlitePool, chat_id: i64) -> Result<ChatStats
 
     let top_offenders = top_rows
         .into_iter()
-        .map(|row| (row.get::<i64, _>("user_id"), row.get::<i64, _>("c")))
+        .map(|row| {
+            (
+                row.get::<i64, _>("user_id"),
+                row.get::<Option<String>, _>("username"),
+                row.get::<i64, _>("c"),
+            )
+        })
         .collect();
 
     Ok(ChatStats {

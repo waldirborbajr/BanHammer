@@ -51,6 +51,10 @@ pub async fn command_handler(
         Command::Unban(argument) => {
             handle_unban_command(&bot, &msg, lang, argument.trim()).await?;
         }
+
+        Command::BlockDomain(argument) => {
+            handle_blockdomain_command(&bot, &msg, &state, lang, argument.trim()).await?;
+        }
     }
 
     Ok(())
@@ -193,6 +197,61 @@ async fn handle_unban_command(
     Ok(())
 }
 
+/// Bloqueia um domínio em runtime via /blockdomain <dominio>.
+/// Apenas administradores. Persiste em `blocked_domains` (SQLite)
+/// e atualiza a lista em memória usada pelo motor de moderação
+/// imediatamente — sem precisar editar o TOML nem reiniciar o bot.
+async fn handle_blockdomain_command(
+    bot: &Bot,
+    msg: &Message,
+    state: &AppState,
+    lang: Lang,
+    argument: &str,
+) -> ResponseResult<()> {
+    let chat_id = msg.chat.id;
+
+    let Some(admin) = &msg.from else {
+        return Ok(());
+    };
+
+    if !is_chat_admin(bot, chat_id, admin.id).await {
+        bot.send_message(chat_id, messages::blockdomain_no_permission(lang))
+            .await?;
+
+        return Ok(());
+    }
+
+    if argument.is_empty() {
+        bot.send_message(chat_id, messages::blockdomain_invalid(lang))
+            .await?;
+
+        return Ok(());
+    }
+
+    match state.add_blocked_domain(argument).await {
+        Ok(_) => {
+            bot.send_message(chat_id, messages::blockdomain_success(lang, argument))
+                .await?;
+
+            log::info!(
+                "Domínio '{}' bloqueado por {} no chat {}",
+                argument,
+                admin.id,
+                chat_id
+            );
+        }
+
+        Err(error) => {
+            log::warn!("Falha ao bloquear domínio '{}': {}", argument, error);
+
+            bot.send_message(chat_id, messages::blockdomain_error(lang))
+                .await?;
+        }
+    }
+
+    Ok(())
+}
+
 /// Monta e envia a mensagem de estatísticas do grupo
 async fn handle_stats_command(
     bot: &Bot,
@@ -234,14 +293,25 @@ async fn handle_stats_command(
     );
 
     for (violation_type, count) in &stats.by_type {
-        text.push_str(&format!("• {violation_type}: {count}\n"));
+        text.push_str(&format!(
+            "• {}: {count}\n",
+            escape_markdown_v2(violation_type)
+        ));
     }
 
     if !stats.top_offenders.is_empty() {
         text.push_str(&format!("\n*{}:*\n", labels.top));
 
-        for (user_id, count) in &stats.top_offenders {
-            text.push_str(&format!("• `{user_id}` — {count}\n"));
+        for (user_id, username, count) in &stats.top_offenders {
+            match username {
+                Some(name) => {
+                    text.push_str(&format!("• @{} — {count}\n", escape_markdown_v2(name)));
+                }
+
+                None => {
+                    text.push_str(&format!("• `{user_id}` — {count}\n"));
+                }
+            }
         }
     }
 
@@ -250,6 +320,27 @@ async fn handle_stats_command(
         .await?;
 
     Ok(())
+}
+
+/// Escapa caracteres reservados do Telegram MarkdownV2 (username,
+/// violation_type e qualquer outro texto dinâmico) para não quebrar
+/// a formatação — ou o envio — da mensagem.
+fn escape_markdown_v2(text: &str) -> String {
+    const RESERVED: &[char] = &[
+        '_', '*', '[', ']', '(', ')', '~', '`', '>', '#', '+', '-', '=', '|', '{', '}', '.', '!',
+    ];
+
+    let mut escaped = String::with_capacity(text.len());
+
+    for ch in text.chars() {
+        if RESERVED.contains(&ch) {
+            escaped.push('\\');
+        }
+
+        escaped.push(ch);
+    }
+
+    escaped
 }
 
 /// Handler de mensagens normais
@@ -275,14 +366,22 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
     Ok(())
 }
 
-/// Persiste a violação detectada no banco,
-/// usada depois pelo /stats
+/// Persiste a violação detectada no banco (e o usuário que a cometeu,
+/// para permitir exibir @username em /stats), usada depois pelo /stats
 async fn record_violation(state: &AppState, msg: &Message, user: &User, violation: ViolationType) {
     let chat_id = msg.chat.id.0;
 
     let user_id = user.id.0 as i64;
 
     let message_text = msg.text().or_else(|| msg.caption());
+
+    if let Err(error) = sqlite::upsert_user(&state.db, user_id, user.username.as_deref()).await {
+        log::warn!(
+            "Falha ao registrar usuário no banco (user {}): {}",
+            user_id,
+            error
+        );
+    }
 
     if let Err(error) = sqlite::insert_violation(
         &state.db,
