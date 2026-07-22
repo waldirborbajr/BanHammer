@@ -21,9 +21,10 @@ Roadmap de features sugeridas, organizadas por área. Não estão em ordem de pr
 
 ## Persistência que já existe mas está pela metade
 
-- [ ] **Popular a tabela `users`** (schema já existe em `sqlite.rs`, mas nunca é escrita).
-  Permitiria mostrar `@username` no `/stats` em vez de só `user_id` cru.
-  _Esforço: baixo · Impacto: médio_ — **bom primeiro passo**, infra já pronta.
+- [x] **Popular a tabela `users`** (schema já existe em `sqlite.rs`).
+  `upsert_user` grava `user_id`+`username` a cada violação (`record_violation`); `get_chat_stats` resolve via `LEFT JOIN users` e `/stats` mostra `@username` quando disponível, com fallback pro `user_id` cru.
+  _Esforço: baixo · Impacto: médio_ — já funcionando; só não compilava até a correção dos erros de build.
+  → Sobrou solto: coluna `first_seen` é gravada mas nunca lida em lugar nenhum (possível item futuro: "membro desde" num comando de perfil).
 
 - [ ] **Usar `blocked_domains` de verdade** (tabela e funções `add_blocked_domain`/`get_blocked_domains` já existem, nada chama).
   Comando `/blockdomain <dominio>` para admins adicionarem na hora, sem editar TOML e reiniciar.
