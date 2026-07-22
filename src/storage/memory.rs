@@ -21,7 +21,7 @@ pub struct MemoryStorage {
     ///
     /// Evita processar o mesmo Update do Telegram
     /// mais de uma vez.
-    processed_updates: Arc<RwLock<HashSet<i32>>>,
+    processed_updates: Arc<RwLock<HashSet<u32>>>,
 
     /// Contador temporário de violações por usuário.
     violation_counter: Arc<RwLock<HashMap<i64, u32>>>,
@@ -55,15 +55,14 @@ impl MemoryStorage {
     // ============================================================
 
     /// Marca um Update como processado.
-    pub async fn mark_update_processed(&self, update_id: i32) {
+    pub async fn mark_update_processed(&self, update_id: u32) {
         self.processed_updates.write().await.insert(update_id);
     }
 
     /// Verifica se um Update já foi processado.
-    pub async fn was_update_processed(&self, update_id: i32) -> bool {
+    pub async fn was_update_processed(&self, update_id: u32) -> bool {
         self.processed_updates.read().await.contains(&update_id)
     }
-
     // ============================================================
     // VIOLATIONS
     // ============================================================

@@ -43,13 +43,15 @@ pub async fn run(bot: Bot, state: AppState) {
 /// reconexão/retry; sem essa checagem o bot poderia, por exemplo,
 /// banir duas vezes em resposta ao mesmo evento.
 async fn dedupe_update(update: Update, state: AppState) -> bool {
-    if state.memory.was_update_processed(update.id).await {
-        log::debug!("Update {} já processado, ignorando", update.id);
+    let update_id = update.id.0;
+
+    if state.memory.was_update_processed(update_id).await {
+        log::debug!("Update {} já processado, ignorando", update_id);
 
         return false;
     }
 
-    state.memory.mark_update_processed(update.id).await;
+    state.memory.mark_update_processed(update_id).await;
 
     true
 }
