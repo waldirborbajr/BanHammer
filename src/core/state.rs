@@ -42,9 +42,7 @@ pub struct AppState {
 
 impl AppState {
     /// Inicializa todo o estado da aplicação.
-    pub async fn new(
-        config: Config,
-    ) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn new(config: Config) -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let moderation = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let db = sqlite::init_database(&config.database_url).await?;
@@ -69,9 +67,7 @@ impl AppState {
     ///
     /// Em caso de erro, as regras atualmente carregadas
     /// permanecem válidas.
-    pub async fn reload_moderation(
-        &self,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn reload_moderation(&self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let fresh = ModerationRules::load(rules::CONFIG_PATH)?;
 
         let mut guard = self.moderation.write().await;
@@ -85,10 +81,7 @@ impl AppState {
     ///
     /// A alteração é persistida no SQLite e refletida
     /// imediatamente na cópia mantida em memória.
-    pub async fn add_blocked_domain(
-        &self,
-        domain: &str,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn add_blocked_domain(&self, domain: &str) -> Result<(), sqlx::Error> {
         let normalized = domain.trim().to_lowercase();
 
         sqlite::add_blocked_domain(&self.db, &normalized).await?;

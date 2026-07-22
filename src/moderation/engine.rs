@@ -1,3 +1,5 @@
+use crate::{core::state::AppState, telegram::events::TelegramEvent};
+
 use super::{csam, gambling, links, pornography, regex::normalize_text, spam};
 
 pub use super::violation::ViolationType;
