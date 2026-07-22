@@ -74,6 +74,9 @@ pub async fn analyze_message(
 }
 
 /// Apenas verifica existência de violação.
+/// Apenas verifica existência de violação.
+// TODO: usar em testes de integração do motor de moderação.
+#[allow(dead_code)]
 pub async fn is_violation(text: &str, event: &TelegramEvent, state: &AppState) -> bool {
     analyze_message(text, event, state).await.is_some()
 }

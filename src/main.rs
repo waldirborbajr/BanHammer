@@ -15,9 +15,11 @@ use crate::{
 async fn main() {
     core::logger::init();
 
-    core::logger::startup(Lang::default_from_env());
-
     let config = Config::load();
+
+    let default_lang = Lang::from_code(&config.default_language).unwrap_or(Lang::Pt);
+
+    core::logger::startup(default_lang);
 
     let state = AppState::new(config)
         .await

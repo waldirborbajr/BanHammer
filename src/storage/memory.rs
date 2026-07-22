@@ -82,6 +82,10 @@ impl MemoryStorage {
     }
 
     /// Obtém o número atual de violações.
+    /// Obtém o número atual de violações.
+    // TODO(roadmap): expor via um futuro comando administrativo
+    // (ex.: `/violations <user_id>`).
+    #[allow(dead_code)]
     pub async fn get_violation_count(&self, user_id: i64) -> u32 {
         self.violation_counter
             .read()

@@ -357,7 +357,7 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
 
         record_violation(&state, &msg, user, violation).await;
 
-        handle_violation(&bot, &msg, user, lang).await?;
+        handle_violation(&bot, &msg, user, lang, &state).await?;
     }
 
     Ok(())
@@ -396,10 +396,27 @@ async fn record_violation(state: &AppState, msg: &Message, user: &User, violatio
             error
         );
     }
+
+    // Contador em memória (não persiste entre reinícios).
+    // TODO(roadmap): base para o "sistema de aviso antes do ban" —
+    // hoje só registra/loga, o ban continua acontecendo sempre.
+    let session_count = state.memory.add_violation(user_id).await;
+
+    log::info!(
+        "Usuário {} acumula {} violação(ões) nesta sessão do bot",
+        user_id,
+        session_count
+    );
 }
 
 /// Remove conteúdo proibido e pune usuário
-async fn handle_violation(bot: &Bot, msg: &Message, user: &User, lang: Lang) -> ResponseResult<()> {
+async fn handle_violation(
+    bot: &Bot,
+    msg: &Message,
+    user: &User,
+    lang: Lang,
+    state: &AppState,
+) -> ResponseResult<()> {
     let chat_id = msg.chat.id;
 
     // Remove mensagem
@@ -415,6 +432,10 @@ async fn handle_violation(bot: &Bot, msg: &Message, user: &User, lang: Lang) -> 
                 .ok();
 
             log::info!("Usuário {} banido por conteúdo proibido", user.id);
+
+            // Usuário removido do grupo: o contador de violações
+            // desta sessão não tem mais utilidade.
+            state.memory.reset_violation_count(user.id.0 as i64).await;
         }
 
         Err(error) => {

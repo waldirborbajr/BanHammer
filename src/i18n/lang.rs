@@ -42,6 +42,7 @@ impl Lang {
     }
 
     /// Nome legível do idioma.
+    #[allow(dead_code)]
     pub const fn display_name(self) -> &'static str {
         match self {
             Self::Pt => "Português",
