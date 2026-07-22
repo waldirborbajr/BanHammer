@@ -169,3 +169,21 @@ keywords = [
     "discount",
     "cheap"
 ]
+
+# Escada de punições para violações de baixa severidade
+# (gambling, spam). csam/pornografia/link suspeito continuam
+# banindo direto, sem passar por aqui — ver ViolationType::is_zero_tolerance.
+[strikes]
+# Janela (em dias) considerada ao contar violações recentes do usuário.
+window_days = 30
+# A partir de quantas violações na janela o usuário é silenciado.
+mute_at = 2
+# A partir de quantas violações na janela o usuário é removido (kick).
+kick_at = 3
+# A partir de quantas violações na janela o usuário é banido.
+ban_at = 4
+# Duração do mute, em minutos.
+mute_duration_minutes = 60
+# Duração do "ban" usado para simular kick, em segundos.
+# O Telegram exige pelo menos 31s (abaixo disso o ban vira permanente).
+kick_ban_seconds = 35

@@ -40,6 +40,26 @@ pub fn banned(username: &str) -> String {
     format!("🚫 @{username} ha sido expulsado por infringir las normas.")
 }
 
+pub fn warned(username: &str, count: i64) -> String {
+    format!(
+        "⚠️ @{username}, tu mensaje fue eliminado por infringir las normas del grupo. \
+         Aviso {count} — las infracciones repetidas resultan en silenciamiento y luego expulsión."
+    )
+}
+
+pub fn muted(username: &str, minutes: i64) -> String {
+    format!(
+        "🔇 @{username} ha sido silenciado durante {minutes} minuto(s) por infracciones repetidas."
+    )
+}
+
+pub fn kicked(username: &str) -> String {
+    format!(
+        "👢 @{username} fue expulsado del grupo por infracciones repetidas. \
+         Puede volver a unirse, pero la próxima infracción resultará en un baneo permanente."
+    )
+}
+
 pub const LANG_SET: &str = "✅ El idioma del grupo se ha cambiado correctamente a Español.";
 
 pub const LANG_INVALID: &str = "⚠️ Idioma no válido. Utiliza: pt, en o es.";

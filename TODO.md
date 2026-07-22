@@ -6,10 +6,11 @@ Roadmap de features sugeridas, organizadas por área. Não estão em ordem de pr
 
 ## Governança e ações graduais
 
-- [ ] **Sistema de strikes configurável** (aviso → mute → kick → ban), em vez de ban direto para toda violação.
-  Hoje qualquer violação bane na hora — rígido demais para spam/gambling (severidade baixa), correto para csam/pornografia.
+- [x] **Sistema de strikes configurável** (aviso → mute → kick → ban), em vez de ban direto para toda violação.
+  Implementado: `[strikes]` em `moderation.toml` (`window_days`, `mute_at`, `kick_at`, `ban_at`, `mute_duration_minutes`, `kick_ban_seconds`, validado no boot e reload). Contagem via `sqlite::count_recent_violations` (persistida, escopada por chat+usuário — corrige de brinde o bug do contador antigo não ser por chat). `moderation::strikes::resolve_action` decide a ação; `handlers.rs` aplica via `restrict_chat_member`/`ban_chat_member(...).until_date(...)`.
   _Esforço: médio · Impacto: alto_
-  → **Primeiro passo pronto:** `MemoryStorage::violation_counter` já conta e loga violações por usuário na sessão atual (`add_violation`/`reset_violation_count`, chamados em `record_violation`/`handle_violation`). Falta: persistir entre reinícios e usar a contagem pra decidir mute/kick em vez de banir sempre.
+  → **Assumido:** `csam`, `pornography` e `suspicious_link` continuam com ban direto (zero tolerância) — só `gambling`/`spam` passam pela escada. `suspicious_link` foi incluído aí porque a lista de domínios mistura sites adultos com apostas; se quiser links suspeitos na escada gradual em vez de ban direto, é uma linha em `ViolationType::is_zero_tolerance`.
+  → `MemoryStorage::violation_counter` (contador em memória por sessão) foi superado por essa mudança e ficou marcado `#[allow(dead_code)]`.
 
 - [x] **Comando `/unban` ou `/appeal`** para admin reverter um banimento incorreto sem sair do Telegram.
   _Esforço: baixo · Impacto: médio_

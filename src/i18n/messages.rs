@@ -27,6 +27,33 @@ pub fn banned(lang: Lang, username: &str) -> String {
     }
 }
 
+/// Usuário avisado (1ª violação de baixa severidade)
+pub fn warned(lang: Lang, username: &str, count: i64) -> String {
+    match lang {
+        Lang::Pt => pt::warned(username, count),
+        Lang::En => en::warned(username, count),
+        Lang::Es => es::warned(username, count),
+    }
+}
+
+/// Usuário silenciado (violação de baixa severidade recorrente)
+pub fn muted(lang: Lang, username: &str, minutes: i64) -> String {
+    match lang {
+        Lang::Pt => pt::muted(username, minutes),
+        Lang::En => en::muted(username, minutes),
+        Lang::Es => es::muted(username, minutes),
+    }
+}
+
+/// Usuário removido do grupo (kick, sem ban permanente)
+pub fn kicked(lang: Lang, username: &str) -> String {
+    match lang {
+        Lang::Pt => pt::kicked(username),
+        Lang::En => en::kicked(username),
+        Lang::Es => es::kicked(username),
+    }
+}
+
 /// Violação genérica
 pub fn violation_generic(lang: Lang) -> &'static str {
     match lang {

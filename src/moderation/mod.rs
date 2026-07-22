@@ -6,4 +6,5 @@ pub mod pornography;
 pub mod regex;
 pub mod rules;
 pub mod spam;
+pub mod strikes;
 pub mod violation; // <- adicionar

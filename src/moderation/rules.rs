@@ -14,6 +14,8 @@ pub struct ModerationRules {
     pub spam: KeywordGroup,
 
     pub links: LinkGroup,
+
+    pub strikes: StrikesConfig,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -26,19 +28,41 @@ pub struct LinkGroup {
     pub domains: Vec<String>,
 }
 
+/// Escada de punições para violações de baixa severidade
+/// (gambling, spam). Ver `ViolationType::is_zero_tolerance`
+/// para as categorias que ignoram essa escada e banem direto.
+#[derive(Debug, Deserialize, Clone)]
+pub struct StrikesConfig {
+    pub window_days: i64,
+    pub mute_at: u32,
+    pub kick_at: u32,
+    pub ban_at: u32,
+    pub mute_duration_minutes: i64,
+    pub kick_ban_seconds: i64,
+}
+
 /// Erro de validação de configuração de moderação.
 #[derive(Debug)]
 pub struct ValidationError {
     pub section: &'static str,
+    pub reason: Option<&'static str>,
 }
 
 impl fmt::Display for ValidationError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "moderation.toml: seção [{}] está vazia — o bot não pode iniciar sem regras de moderação carregadas",
-            self.section
-        )
+        match self.reason {
+            Some(reason) => write!(
+                f,
+                "moderation.toml: seção [{}] inválida — {}",
+                self.section, reason
+            ),
+
+            None => write!(
+                f,
+                "moderation.toml: seção [{}] está vazia — o bot não pode iniciar sem regras de moderação carregadas",
+                self.section
+            ),
+        }
     }
 }
 
@@ -62,26 +86,75 @@ impl ModerationRules {
 
     /// Garante que nenhuma categoria de moderação
     /// foi carregada vazia por engano (config incompleta,
-    /// arquivo corrompido, edição malfeita, etc).
+    /// arquivo corrompido, edição malfeita, etc), e que a
+    /// escada de strikes está configurada de forma coerente.
     fn validate(&self) -> Result<(), ValidationError> {
         if self.pornography.keywords.is_empty() {
             return Err(ValidationError {
                 section: "pornography",
+                reason: None,
             });
         }
 
         if self.gambling.keywords.is_empty() {
             return Err(ValidationError {
                 section: "gambling",
+                reason: None,
             });
         }
 
         if self.spam.keywords.is_empty() {
-            return Err(ValidationError { section: "spam" });
+            return Err(ValidationError {
+                section: "spam",
+                reason: None,
+            });
         }
 
         if self.links.domains.is_empty() {
-            return Err(ValidationError { section: "links" });
+            return Err(ValidationError {
+                section: "links",
+                reason: None,
+            });
+        }
+
+        self.strikes.validate()?;
+
+        Ok(())
+    }
+}
+
+impl StrikesConfig {
+    fn validate(&self) -> Result<(), ValidationError> {
+        if !(1 <= self.mute_at && self.mute_at < self.kick_at && self.kick_at < self.ban_at) {
+            return Err(ValidationError {
+                section: "strikes",
+                reason: Some("mute_at, kick_at e ban_at precisam ser crescentes e >= 1"),
+            });
+        }
+
+        if self.window_days < 1 {
+            return Err(ValidationError {
+                section: "strikes",
+                reason: Some("window_days precisa ser >= 1"),
+            });
+        }
+
+        if self.mute_duration_minutes < 1 {
+            return Err(ValidationError {
+                section: "strikes",
+                reason: Some("mute_duration_minutes precisa ser >= 1"),
+            });
+        }
+
+        // Telegram considera bans com until_date a menos de 30s no
+        // futuro como permanentes — abaixo de 31 o "kick" viraria ban.
+        if self.kick_ban_seconds < 31 {
+            return Err(ValidationError {
+                section: "strikes",
+                reason: Some(
+                    "kick_ban_seconds precisa ser >= 31 (o Telegram trata valores menores como ban permanente)",
+                ),
+            });
         }
 
         Ok(())

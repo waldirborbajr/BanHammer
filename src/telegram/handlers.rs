@@ -1,12 +1,17 @@
+use chrono::{Duration as ChronoDuration, Utc};
 use teloxide::{
     prelude::*,
-    types::{ParseMode, User, UserId},
+    types::{ChatPermissions, ParseMode, User, UserId},
 };
 
 use crate::{
     core::state::AppState,
     i18n::{Lang, LanguageManager, messages},
-    moderation::engine::{ViolationType, analyze_message},
+    moderation::{
+        engine::{ViolationType, analyze_message},
+        rules::StrikesConfig,
+        strikes::{StrikeAction, resolve_action},
+    },
     storage::sqlite,
     telegram::{admin::is_chat_admin, events::TelegramEvent},
 };
@@ -357,7 +362,11 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
 
         record_violation(&state, &msg, user, violation).await;
 
-        handle_violation(&bot, &msg, user, lang, &state).await?;
+        if violation.is_zero_tolerance() {
+            handle_ban(&bot, &msg, user, lang).await?;
+        } else {
+            handle_graduated_violation(&bot, &msg, user, lang, &state).await?;
+        }
     }
 
     Ok(())
@@ -365,6 +374,7 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
 
 /// Persiste a violação detectada no banco (e o usuário que a cometeu,
 /// para permitir exibir @username em /stats), usada depois pelo /stats
+/// e pela contagem de strikes.
 async fn record_violation(state: &AppState, msg: &Message, user: &User, violation: ViolationType) {
     let chat_id = msg.chat.id.0;
 
@@ -396,27 +406,177 @@ async fn record_violation(state: &AppState, msg: &Message, user: &User, violatio
             error
         );
     }
-
-    // Contador em memória (não persiste entre reinícios).
-    // TODO(roadmap): base para o "sistema de aviso antes do ban" —
-    // hoje só registra/loga, o ban continua acontecendo sempre.
-    let session_count = state.memory.add_violation(user_id).await;
-
-    log::info!(
-        "Usuário {} acumula {} violação(ões) nesta sessão do bot",
-        user_id,
-        session_count
-    );
 }
 
-/// Remove conteúdo proibido e pune usuário
-async fn handle_violation(
+/// Decide e aplica a punição para violações de baixa severidade
+/// (gambling, spam), com base no número de violações recentes do
+/// usuário nesse chat (aviso → mute → kick → ban).
+///
+/// A contagem vem do SQLite (tabela `violations`, já persistida
+/// por `record_violation`), então sobrevive a reinícios do bot.
+async fn handle_graduated_violation(
     bot: &Bot,
     msg: &Message,
     user: &User,
     lang: Lang,
     state: &AppState,
 ) -> ResponseResult<()> {
+    let chat_id = msg.chat.id;
+
+    let strikes_config = state.moderation.read().await.strikes.clone();
+
+    let count = match sqlite::count_recent_violations(
+        &state.db,
+        chat_id.0,
+        user.id.0 as i64,
+        strikes_config.window_days,
+    )
+    .await
+    {
+        Ok(count) => count,
+
+        Err(error) => {
+            log::warn!(
+                "Falha ao contar violações recentes (chat {}, user {}): {} — tratando como 1ª violação",
+                chat_id,
+                user.id,
+                error
+            );
+
+            // Falha ao consultar o histórico não deve escalar a punição
+            // por engano: na dúvida, trata como primeira violação (aviso).
+            1
+        }
+    };
+
+    match resolve_action(count, &strikes_config) {
+        StrikeAction::Warn => handle_warn(bot, msg, user, lang, count).await,
+        StrikeAction::Mute => handle_mute(bot, msg, user, lang, &strikes_config).await,
+        StrikeAction::Kick => handle_kick(bot, msg, user, lang, &strikes_config).await,
+        StrikeAction::Ban => handle_ban(bot, msg, user, lang).await,
+    }
+}
+
+/// 1ª violação de baixa severidade: remove a mensagem e avisa o
+/// usuário, sem restringir sua participação no grupo.
+async fn handle_warn(
+    bot: &Bot,
+    msg: &Message,
+    user: &User,
+    lang: Lang,
+    count: i64,
+) -> ResponseResult<()> {
+    let chat_id = msg.chat.id;
+
+    bot.delete_message(chat_id, msg.id).await.ok();
+
+    let username = user.username.as_deref().unwrap_or("user");
+
+    bot.send_message(chat_id, messages::warned(lang, username, count))
+        .await
+        .ok();
+
+    log::info!(
+        "Usuário {} avisado (violação {} na janela configurada)",
+        user.id,
+        count
+    );
+
+    Ok(())
+}
+
+/// Violação recorrente: remove a mensagem e silencia o usuário
+/// por `mute_duration_minutes` (definido em moderation.toml).
+async fn handle_mute(
+    bot: &Bot,
+    msg: &Message,
+    user: &User,
+    lang: Lang,
+    strikes_config: &StrikesConfig,
+) -> ResponseResult<()> {
+    let chat_id = msg.chat.id;
+
+    bot.delete_message(chat_id, msg.id).await.ok();
+
+    let until = Utc::now() + ChronoDuration::minutes(strikes_config.mute_duration_minutes);
+
+    match bot
+        .restrict_chat_member(chat_id, user.id, ChatPermissions::empty())
+        .until_date(until)
+        .await
+    {
+        Ok(_) => {
+            let username = user.username.as_deref().unwrap_or("user");
+
+            bot.send_message(
+                chat_id,
+                messages::muted(lang, username, strikes_config.mute_duration_minutes),
+            )
+            .await
+            .ok();
+
+            log::info!(
+                "Usuário {} silenciado por {} minuto(s) por violações repetidas",
+                user.id,
+                strikes_config.mute_duration_minutes
+            );
+        }
+
+        Err(error) => {
+            log::warn!("Falha ao silenciar usuário {}: {}", user.id, error);
+
+            bot.send_message(chat_id, messages::violation_generic(lang))
+                .await
+                .ok();
+        }
+    }
+
+    Ok(())
+}
+
+/// Violação recorrente: remove a mensagem e remove o usuário do
+/// grupo sem banimento permanente (o Telegram o deixa voltar
+/// automaticamente após `kick_ban_seconds`).
+async fn handle_kick(
+    bot: &Bot,
+    msg: &Message,
+    user: &User,
+    lang: Lang,
+    strikes_config: &StrikesConfig,
+) -> ResponseResult<()> {
+    let chat_id = msg.chat.id;
+
+    bot.delete_message(chat_id, msg.id).await.ok();
+
+    let until = Utc::now() + ChronoDuration::seconds(strikes_config.kick_ban_seconds);
+
+    match bot.ban_chat_member(chat_id, user.id).until_date(until).await {
+        Ok(_) => {
+            let username = user.username.as_deref().unwrap_or("user");
+
+            bot.send_message(chat_id, messages::kicked(lang, username))
+                .await
+                .ok();
+
+            log::info!("Usuário {} removido do grupo (kick) por violações repetidas", user.id);
+        }
+
+        Err(error) => {
+            log::warn!("Falha ao remover (kick) usuário {}: {}", user.id, error);
+
+            bot.send_message(chat_id, messages::violation_generic(lang))
+                .await
+                .ok();
+        }
+    }
+
+    Ok(())
+}
+
+/// Remove conteúdo proibido e bane o usuário permanentemente.
+/// Usado tanto para violações de zero tolerância (csam, pornografia,
+/// link suspeito) quanto para o topo da escada de strikes.
+async fn handle_ban(bot: &Bot, msg: &Message, user: &User, lang: Lang) -> ResponseResult<()> {
     let chat_id = msg.chat.id;
 
     // Remove mensagem
@@ -432,10 +592,6 @@ async fn handle_violation(
                 .ok();
 
             log::info!("Usuário {} banido por conteúdo proibido", user.id);
-
-            // Usuário removido do grupo: o contador de violações
-            // desta sessão não tem mais utilidade.
-            state.memory.reset_violation_count(user.id.0 as i64).await;
         }
 
         Err(error) => {

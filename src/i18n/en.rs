@@ -28,6 +28,24 @@ pub fn banned(username: &str) -> String {
     format!("🚫 @{username} has been banned for violating the rules.")
 }
 
+pub fn warned(username: &str, count: i64) -> String {
+    format!(
+        "⚠️ @{username}, your message was removed for violating the group rules. \
+         Warning {count} — repeated violations lead to being muted and then banned."
+    )
+}
+
+pub fn muted(username: &str, minutes: i64) -> String {
+    format!("🔇 @{username} has been muted for {minutes} minute(s) after repeated rule violations.")
+}
+
+pub fn kicked(username: &str) -> String {
+    format!(
+        "👢 @{username} was removed from the group for repeated violations. \
+         They may rejoin, but the next violation results in a permanent ban."
+    )
+}
+
 pub const LANG_SET: &str = "✅ Bot language set to English.";
 
 pub const LANG_INVALID: &str =
