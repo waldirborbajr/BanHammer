@@ -22,6 +22,21 @@ impl ViolationType {
             ViolationType::Spam => "spam",
         }
     }
+
+    /// Violações de zero tolerância banem direto, sem passar
+    /// pela escada de strikes (aviso → mute → kick → ban).
+    ///
+    /// `SuspiciousLink` entra aqui porque a lista de domínios em
+    /// `moderation.toml` mistura sites adultos com apostas — não dá
+    /// pra inferir a severidade só pela URL, então tratamos como
+    /// zero tolerância por segurança. Ajuste aqui se quiser que
+    /// links suspeitos passem pela escada gradual como gambling/spam.
+    pub fn is_zero_tolerance(&self) -> bool {
+        matches!(
+            self,
+            ViolationType::Csam | ViolationType::Pornography | ViolationType::SuspiciousLink
+        )
+    }
 }
 
 impl fmt::Display for ViolationType {

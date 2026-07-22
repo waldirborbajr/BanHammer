@@ -70,6 +70,11 @@ impl MemoryStorage {
     /// Incrementa o contador de violações.
     ///
     /// Retorna o número atual de violações.
+    // TODO: superado pela contagem persistida em SQLite
+    // (`storage::sqlite::count_recent_violations`), usada pela
+    // escada de strikes desde que ela passou a existir. Mantido
+    // caso um cache em memória volte a fazer sentido no futuro.
+    #[allow(dead_code)]
     pub async fn add_violation(&self, user_id: i64) -> u32 {
         let mut counter = self.violation_counter.write().await;
 
@@ -80,7 +85,6 @@ impl MemoryStorage {
         *entry
     }
 
-    /// Obtém o número atual de violações.
     /// Obtém o número atual de violações.
     // TODO(roadmap): expor via um futuro comando administrativo
     // (ex.: `/violations <user_id>`).
@@ -95,6 +99,9 @@ impl MemoryStorage {
     }
 
     /// Remove o histórico de violações de um usuário.
+    // TODO: mesma observação de `add_violation` — sem uso desde
+    // que a contagem de strikes passou a vir do SQLite.
+    #[allow(dead_code)]
     pub async fn reset_violation_count(&self, user_id: i64) {
         self.violation_counter.write().await.remove(&user_id);
     }

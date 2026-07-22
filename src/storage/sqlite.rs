@@ -150,6 +150,36 @@ pub async fn insert_violation(
     Ok(())
 }
 
+/// Conta quantas violações um usuário cometeu num chat específico
+/// dentro dos últimos `window_days` dias — usada pela escada de
+/// strikes (aviso → mute → kick → ban) para decidir a punição.
+///
+/// Inclui a violação recém-inserida por `insert_violation`, então
+/// o valor retornado já representa "esta é a N-ésima violação".
+pub async fn count_recent_violations(
+    pool: &SqlitePool,
+    chat_id: i64,
+    user_id: i64,
+    window_days: i64,
+) -> Result<i64, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        SELECT COUNT(*) as violation_count
+        FROM violations
+        WHERE chat_id = ?
+          AND user_id = ?
+          AND created_at >= datetime('now', '-' || ? || ' days')
+        "#,
+    )
+    .bind(chat_id)
+    .bind(user_id)
+    .bind(window_days)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(row.get::<i64, _>("violation_count"))
+}
+
 /// Cria ou atualiza o registro de um usuário (user_id + username).
 ///
 /// Usa `COALESCE` para não sobrescrever um username já conhecido
