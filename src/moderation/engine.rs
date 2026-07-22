@@ -1,8 +1,6 @@
-use crate::{core::state::AppState, telegram::events::TelegramEvent};
+use super::{csam, gambling, links, pornography, regex::normalize_text, spam};
 
-use super::{
-    csam, gambling, links, pornography, regex::normalize_text, spam, violation::ViolationType,
-};
+pub use super::violation::ViolationType;
 
 /// Analisa uma mensagem usando:
 ///

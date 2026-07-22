@@ -8,14 +8,14 @@ use teloxide::prelude::*;
 
 use crate::{
     core::{config::Config, state::AppState},
-    i18n::lang::DEFAULT_LANG,
+    i18n::Lang,
 };
 
 #[tokio::main]
 async fn main() {
     core::logger::init();
 
-    core::logger::startup(*DEFAULT_LANG);
+    core::logger::startup(Lang::default_from_env());
 
     let config = Config::load();
 

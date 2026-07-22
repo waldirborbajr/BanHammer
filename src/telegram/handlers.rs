@@ -60,6 +60,7 @@ pub async fn command_handler(
 async fn handle_language_command(
     bot: &Bot,
     msg: &Message,
+    state: &AppState,
     lang: Lang,
     argument: &str,
 ) -> ResponseResult<()> {
@@ -78,7 +79,7 @@ async fn handle_language_command(
 
     match Lang::from_code(argument) {
         Some(new_lang) => {
-            set_lang_for_chat(chat_id, new_lang);
+            LanguageManager::set(state, chat_id, new_lang).await;
 
             bot.send_message(chat_id, messages::lang_set(new_lang))
                 .await?;
