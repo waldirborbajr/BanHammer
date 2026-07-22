@@ -207,6 +207,58 @@ pub async fn upsert_user(
     Ok(())
 }
 
+/// Verifica se um usuário é elegível para a whitelist de confiança:
+/// membro há pelo menos `min_days_in_group` dias (contados a partir
+/// de `users.first_seen`) e com no máximo `max_violations` violações
+/// registradas no histórico total do chat.
+///
+/// Retorna `false` (nunca `Err` silencioso) se o usuário não tiver
+/// registro em `users` ainda — nesse caso não há como saber há
+/// quanto tempo ele está no grupo, então trata como não confiável.
+///
+/// Importante: esta checagem não é usada para csam/pornography/
+/// suspicious_link (zero tolerância) — só para a escada de strikes
+/// de gambling/spam. Ver `TrustConfig` em `moderation/rules.rs`.
+pub async fn is_trusted_user(
+    pool: &SqlitePool,
+    chat_id: i64,
+    user_id: i64,
+    min_days_in_group: i64,
+    max_violations: i64,
+) -> Result<bool, sqlx::Error> {
+    let row = sqlx::query(
+        r#"
+        SELECT
+            (
+                SELECT first_seen <= datetime('now', '-' || ? || ' days')
+                FROM users
+                WHERE user_id = ?
+            ) AS old_enough,
+            (
+                SELECT COUNT(*)
+                FROM violations
+                WHERE chat_id = ?
+                  AND user_id = ?
+            ) AS violation_count
+        "#,
+    )
+    .bind(min_days_in_group)
+    .bind(user_id)
+    .bind(chat_id)
+    .bind(user_id)
+    .fetch_one(pool)
+    .await?;
+
+    // `old_enough` vem NULL se não houver linha em `users` para o
+    // usuário — SQLite mapeia isso para `false` no bool do sqlx via
+    // Option, então tratamos explicitamente como "não confiável".
+    let old_enough: Option<bool> = row.get("old_enough");
+
+    let violation_count: i64 = row.get("violation_count");
+
+    Ok(old_enough.unwrap_or(false) && violation_count <= max_violations)
+}
+
 /// Adiciona domínio bloqueado.
 pub async fn add_blocked_domain(pool: &SqlitePool, domain: &str) -> Result<(), sqlx::Error> {
     sqlx::query(

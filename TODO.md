@@ -15,8 +15,10 @@ Roadmap de features sugeridas, organizadas por área. Não estão em ordem de pr
 - [x] **Comando `/unban` ou `/appeal`** para admin reverter um banimento incorreto sem sair do Telegram.
   _Esforço: baixo · Impacto: médio_
 
-- [ ] **Whitelist de usuários confiáveis** — membros antigos sem histórico de violação recebem checagem mais branda.
+- [x] **Whitelist de usuários confiáveis** — membros antigos sem histórico de violação recebem checagem mais branda.
+  Implementado: `[trust]` em `moderation.toml` (`enabled`, `min_days_in_group`, `max_violations`, `strikes_multiplier`), validado no boot/reload junto das demais seções. `sqlite::is_trusted_user` checa `users.first_seen` + contagem total de violações do usuário no chat. `handlers::resolve_strikes_config` multiplica `mute_at`/`kick_at`/`ban_at` (via `StrikesConfig::scaled`) para usuários elegíveis, chamado **antes** de `record_violation` — senão a violação em curso contaminaria a checagem de "histórico limpo".
   _Esforço: médio · Impacto: médio_
+  → **Assumido:** não afeta `csam`/`pornography`/`suspicious_link` (zero tolerância) — só relaxa a escada de strikes de `gambling`/`spam`. Não há comando manual `/trust`; é 100% automático a partir de tempo de casa + histórico. Se quiser um override manual de admin, é uma extensão natural (comando + coluna/flag em `users`).
 
 ---
 

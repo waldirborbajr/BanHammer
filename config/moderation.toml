@@ -187,3 +187,22 @@ mute_duration_minutes = 60
 # Duração do "ban" usado para simular kick, em segundos.
 # O Telegram exige pelo menos 31s (abaixo disso o ban vira permanente).
 kick_ban_seconds = 35
+
+# Whitelist de usuários confiáveis: membros antigos e sem histórico de
+# violação recebem checagem mais branda. NÃO afeta csam/pornografia/link
+# suspeito (zero tolerância) — só relaxa a escada de strikes de
+# gambling/spam. Ver TrustConfig em moderation/rules.rs.
+[trust]
+# Liga/desliga a whitelist sem remover a seção.
+enabled = true
+# Dias mínimos como membro (contados a partir de users.first_seen)
+# para o usuário ser elegível.
+min_days_in_group = 60
+# Violações toleradas no histórico total do usuário para ainda ser
+# considerado "sem histórico". 0 = zero tolerância a qualquer violação
+# anterior (recomendado).
+max_violations = 0
+# Multiplica mute_at/kick_at/ban_at para usuários confiáveis.
+# Ex: com mute_at=2 e strikes_multiplier=3, um usuário confiável só
+# é silenciado na 6a violação recente, em vez da 2a.
+strikes_multiplier = 3

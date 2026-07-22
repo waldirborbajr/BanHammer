@@ -360,16 +360,79 @@ pub async fn message_handler(bot: Bot, msg: Message, state: AppState) -> Respons
     if let Some(violation) = analyze_message(content, &event, &state).await {
         let lang = LanguageManager::get(&state, msg.chat.id).await;
 
-        record_violation(&state, &msg, user, violation).await;
-
         if violation.is_zero_tolerance() {
+            record_violation(&state, &msg, user, violation).await;
+
             handle_ban(&bot, &msg, user, lang).await?;
         } else {
-            handle_graduated_violation(&bot, &msg, user, lang, &state).await?;
+            // Resolve a config de strikes (com o multiplicador de
+            // confiança, se aplicável) ANTES de registrar esta violação.
+            // Se checássemos depois, a violação em curso já apareceria
+            // no histórico consultado pela whitelist, e um usuário com
+            // `max_violations = 0` nunca seria considerado confiável.
+            let strikes_config =
+                resolve_strikes_config(&state, msg.chat.id.0, user.id.0 as i64).await;
+
+            record_violation(&state, &msg, user, violation).await;
+
+            handle_graduated_violation(&bot, &msg, user, lang, &state, strikes_config).await?;
         }
     }
 
     Ok(())
+}
+
+/// Resolve a `StrikesConfig` efetiva para este usuário: se a whitelist
+/// de confiança estiver ativa e o usuário for elegível (membro antigo
+/// e sem histórico de violação, ver `TrustConfig`), os limiares
+/// `mute_at`/`kick_at`/`ban_at` vêm multiplicados por
+/// `trust.strikes_multiplier`. Caso contrário, retorna a config padrão.
+///
+/// **Precisa ser chamada antes de `record_violation`** para a violação
+/// em curso não contar contra o próprio histórico "limpo" checado aqui.
+async fn resolve_strikes_config(state: &AppState, chat_id: i64, user_id: i64) -> StrikesConfig {
+    let (strikes_config, trust_config) = {
+        let rules = state.moderation.read().await;
+
+        (rules.strikes.clone(), rules.trust.clone())
+    };
+
+    if !trust_config.enabled {
+        return strikes_config;
+    }
+
+    match sqlite::is_trusted_user(
+        &state.db,
+        chat_id,
+        user_id,
+        trust_config.min_days_in_group,
+        trust_config.max_violations,
+    )
+    .await
+    {
+        Ok(true) => {
+            log::info!(
+                "Usuário {} é confiável (whitelist) — limiares de strikes multiplicados por {}",
+                user_id,
+                trust_config.strikes_multiplier
+            );
+
+            strikes_config.scaled(trust_config.strikes_multiplier)
+        }
+
+        Ok(false) => strikes_config,
+
+        Err(error) => {
+            log::warn!(
+                "Falha ao checar whitelist de confiança (chat {}, user {}): {} — tratando como não confiável",
+                chat_id,
+                user_id,
+                error
+            );
+
+            strikes_config
+        }
+    }
 }
 
 /// Persiste a violação detectada no banco (e o usuário que a cometeu,
@@ -420,10 +483,9 @@ async fn handle_graduated_violation(
     user: &User,
     lang: Lang,
     state: &AppState,
+    strikes_config: StrikesConfig,
 ) -> ResponseResult<()> {
     let chat_id = msg.chat.id;
-
-    let strikes_config = state.moderation.read().await.strikes.clone();
 
     let count = match sqlite::count_recent_violations(
         &state.db,
