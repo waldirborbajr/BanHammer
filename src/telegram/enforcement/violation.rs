@@ -1,4 +1,4 @@
-use teloxide::prelude::*;
+use teloxide::{prelude::*, types::User};
 
 use crate::{
     core::state::AppState,
