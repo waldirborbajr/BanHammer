@@ -1,19 +1,26 @@
 use sqlx::{
     Row,
-    sqlite::{SqlitePool, SqlitePoolOptions},
+    sqlite::{SqliteConnectOptions, SqlitePool, SqlitePoolOptions},
 };
 
-use std::time::Duration;
+use std::{str::FromStr, time::Duration};
 
 /// Inicializa conexão com SQLite.
 ///
 /// Exemplo:
 /// sqlite://bothammer.db
+///
+/// `create_if_missing(true)` é necessário porque o sqlx, por padrão,
+/// só abre um arquivo de banco já existente — na primeira execução
+/// (arquivo ainda não criado) a conexão falharia com
+/// `SQLITE_CANTOPEN` sem essa opção.
 pub async fn init_database(database_url: &str) -> Result<SqlitePool, sqlx::Error> {
+    let options = SqliteConnectOptions::from_str(database_url)?.create_if_missing(true);
+
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .acquire_timeout(Duration::from_secs(5))
-        .connect(database_url)
+        .connect_with(options)
         .await?;
 
     create_tables(&pool).await?;
