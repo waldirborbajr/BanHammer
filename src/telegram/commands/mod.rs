@@ -1,5 +1,13 @@
 use teloxide::utils::command::BotCommands;
 
+pub mod blockdomain;
+pub mod help;
+pub mod language;
+pub mod reload;
+pub mod stats;
+pub mod status;
+pub mod unban;
+
 /// Comandos disponíveis no BanHammer
 #[derive(BotCommands, Clone, Debug)]
 #[command(rename_rule = "lowercase", description = "BanHammer Commands")]
